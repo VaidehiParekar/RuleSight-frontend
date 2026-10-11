@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 
-import { useActor } from "@/app/actor-context";
+import { useSession } from "@/app/auth-context";
 import { EvidenceTable } from "@/components/data-display/evidence-table";
 import { GraphPath } from "@/components/data-display/graph-path";
 import { PriorityChip } from "@/components/data-display/priority-chip";
@@ -332,7 +332,7 @@ const STATUS_DIALOG: Record<
 
 function VerdictRail({ data }: { data: GapTrace }) {
   const { gap } = data;
-  const { actor } = useActor();
+  const { actor } = useSession();
   const { notify } = useToast();
   const updateStatus = useUpdateGapStatus();
   const [pending, setPending] = useState<Exclude<GapStatus, "potential"> | null>(null);

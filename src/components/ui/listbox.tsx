@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -20,8 +21,38 @@ interface ListboxProps {
 }
 
 const MAX_HEIGHT = 260;
+const GAP = 4;
 
-/** Themed replacement for <select>, whose popup the browser draws in system colours. */
+interface Placement {
+  left: number;
+  width: number;
+  top?: number;
+  bottom?: number;
+  maxHeight: number;
+}
+
+/**
+ * Where the list should sit: below the trigger, or above it when there is no room below.
+ * Measured from the viewport, so it is correct wherever the trigger sits in the page.
+ */
+function placementFor(rect: DOMRect): Placement {
+  const below = window.innerHeight - rect.bottom - GAP;
+  const above = rect.top - GAP;
+  const flip = below < 160 && above > below;
+  const base = { left: rect.left, width: rect.width };
+  return flip
+    ? {
+        ...base,
+        bottom: window.innerHeight - rect.top + GAP,
+        maxHeight: Math.min(MAX_HEIGHT, above - 8),
+      }
+    : { ...base, top: rect.bottom + GAP, maxHeight: Math.min(MAX_HEIGHT, below - 8) };
+}
+
+/**
+ * Themed replacement for <select>, whose popup the browser draws in system colours.
+ * The list is portalled to <body>, so a dialog's blur or transform cannot move it.
+ */
 export function Listbox({
   options,
   value,
@@ -36,26 +67,18 @@ export function Listbox({
   const listRef = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [position, setPosition] = useState<CSSProperties>({});
+  const [placement, setPlacement] = useState<Placement | null>(null);
 
   const selectedIndex = options.findIndex((option) => option.value === value);
   const selected = options[selectedIndex];
 
-  const openList = () => {
+  const place = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const below = window.innerHeight - rect.bottom;
-    const flip = below < 200 && rect.top > below;
-    setPosition({
-      left: rect.left,
-      width: rect.width,
-      ...(flip
-        ? {
-            bottom: window.innerHeight - rect.top + 4,
-            maxHeight: Math.min(MAX_HEIGHT, rect.top - 12),
-          }
-        : { top: rect.bottom + 4, maxHeight: Math.min(MAX_HEIGHT, below - 12) }),
-    });
+    if (rect) setPlacement(placementFor(rect));
+  };
+
+  const openList = () => {
+    place();
     setActive(Math.max(selectedIndex, 0));
     setOpen(true);
   };
@@ -71,24 +94,23 @@ export function Listbox({
     close(true);
   };
 
+  // Keep the list attached to the trigger while anything scrolls or the window resizes.
   useEffect(() => {
     if (!open) return undefined;
-    const dismiss = (event: Event) => {
+    const onOutside = (event: Event) => {
       const target = event.target as Node;
       if (triggerRef.current?.contains(target) || listRef.current?.contains(target)) return;
       setOpen(false);
     };
-    const dismissAlways = () => {
-      setOpen(false);
-    };
-    document.addEventListener("pointerdown", dismiss);
-    window.addEventListener("resize", dismissAlways);
-    window.addEventListener("scroll", dismiss, true);
+    document.addEventListener("pointerdown", onOutside);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
     return () => {
-      document.removeEventListener("pointerdown", dismiss);
-      window.removeEventListener("resize", dismissAlways);
-      window.removeEventListener("scroll", dismiss, true);
+      document.removeEventListener("pointerdown", onOutside);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
     };
+    // place reads refs only; it is stable in behaviour for the life of the open list.
   }, [open]);
 
   useEffect(() => {
@@ -140,6 +162,48 @@ export function Listbox({
     }
   };
 
+  const popup =
+    open && placement
+      ? createPortal(
+          <ul
+            ref={listRef}
+            id={listId}
+            role="listbox"
+            className="listbox-popup"
+            style={{
+              left: placement.left,
+              width: placement.width,
+              top: placement.top,
+              bottom: placement.bottom,
+              maxHeight: placement.maxHeight,
+            }}
+          >
+            {options.map((option, index) => (
+              <li
+                key={option.value}
+                id={`${listId}-${String(index)}`}
+                role="option"
+                aria-selected={option.value === value}
+                className={cn(
+                  "listbox-option",
+                  index === active && "active",
+                  option.value === value && "selected",
+                )}
+                onPointerEnter={() => {
+                  setActive(index);
+                }}
+                onClick={() => {
+                  choose(index);
+                }}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )
+      : null;
+
   return (
     <>
       <button
@@ -163,31 +227,7 @@ export function Listbox({
         <span className="listbox-value">{selected?.label ?? ""}</span>
         <ChevronDown size={14} className="listbox-chevron" aria-hidden="true" />
       </button>
-      {open ? (
-        <ul ref={listRef} id={listId} role="listbox" className="listbox-popup" style={position}>
-          {options.map((option, index) => (
-            <li
-              key={option.value}
-              id={`${listId}-${String(index)}`}
-              role="option"
-              aria-selected={option.value === value}
-              className={cn(
-                "listbox-option",
-                index === active && "active",
-                option.value === value && "selected",
-              )}
-              onPointerEnter={() => {
-                setActive(index);
-              }}
-              onClick={() => {
-                choose(index);
-              }}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {popup}
     </>
   );
 }

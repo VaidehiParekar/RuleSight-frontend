@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { IconButton } from "@/components/ui/button";
 
@@ -73,7 +74,9 @@ export function Dialog({ title, onClose, children, footer, size = "md", onSubmit
     },
   } as const;
 
-  return (
+  // Portalled to <body>: an animated page container would otherwise become the
+  // reference for this fixed overlay and clip it.
+  return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       {onSubmit ? (
         <form
@@ -89,6 +92,7 @@ export function Dialog({ title, onClose, children, footer, size = "md", onSubmit
           {content}
         </section>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

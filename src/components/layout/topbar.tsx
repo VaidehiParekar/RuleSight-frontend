@@ -1,8 +1,7 @@
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router";
 
-import { useActor } from "@/app/actor-context";
-import { ActorSelect } from "@/components/layout/actor-select";
+import { useAuth, useSession } from "@/app/auth-context";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { IconButton } from "@/components/ui/button";
 
@@ -13,7 +12,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ navOpen, onToggleNavigation, onOpenSearch }: TopbarProps) {
-  const { signOut } = useActor();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
   return (
     <header className="topbar">
@@ -32,7 +31,7 @@ export function Topbar({ navOpen, onToggleNavigation, onOpenSearch }: TopbarProp
       </button>
       <span className="spacer" />
       <ThemeToggle />
-      <ActorSelect />
+      <SignedInAs />
       <IconButton
         label="Sign out"
         onClick={() => {
@@ -43,5 +42,21 @@ export function Topbar({ navOpen, onToggleNavigation, onOpenSearch }: TopbarProp
         <LogOut size={16} />
       </IconButton>
     </header>
+  );
+}
+
+/** Who is signed in. Read-only: the account is chosen at sign-in, not switched here. */
+function SignedInAs() {
+  const { actor } = useSession();
+  return (
+    <div className="signed-in-as" title={`Signed in as ${actor.name}, ${actor.role}`}>
+      <span className="avatar" aria-hidden="true">
+        {actor.initials}
+      </span>
+      <span className="actor-copy">
+        <small>{actor.role}</small>
+        <strong>{actor.name}</strong>
+      </span>
+    </div>
   );
 }

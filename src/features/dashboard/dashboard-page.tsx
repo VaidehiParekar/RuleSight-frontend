@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
-import { useActor } from "@/app/actor-context";
+import { useSession } from "@/app/auth-context";
 import { RunGantt } from "@/components/charts/run-gantt";
 import { SegmentBar, SegmentLegend, type Segment } from "@/components/charts/segment-bar";
 import { TrendChart } from "@/components/charts/trend-chart";
@@ -25,6 +25,7 @@ import {
 } from "@/hooks/use-rulesight";
 import { formatDateTime, formatDuration, formatScore } from "@/lib/format";
 import { GAP_TYPE } from "@/lib/labels";
+import { ROLES } from "@/lib/roles";
 import type {
   DashboardSummary,
   Gap,
@@ -57,14 +58,15 @@ const MOCK_HISTORY: readonly [string, number, number][] = [
  * gets review progress and pipeline quality. Figures come from the data.
  */
 export function DashboardPage() {
-  const { actor } = useActor();
+  const { user } = useSession();
   const navigate = useNavigate();
   const { notify } = useToast();
   const summary = useDashboardSummary();
   const obligations = useObligations();
   const documents = useDocuments();
   const [uploadOpen, setUploadOpen] = useState(false);
-  const isCompliance = actor.id === "priya";
+  // Analysts get the review view; officers, administrators and auditors get the oversight view.
+  const isCompliance = user.role !== ROLES.complianceAnalyst;
 
   const sources = [...new Set((obligations.data ?? []).map((item) => item.source_label))];
   const scope = sources.length ? ` against ${sources.join(" and ")}` : "";

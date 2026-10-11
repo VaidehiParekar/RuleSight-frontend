@@ -1,6 +1,6 @@
 import { useState, type DragEvent, type SyntheticEvent } from "react";
 
-import { useActor } from "@/app/actor-context";
+import { useSession } from "@/app/auth-context";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input } from "@/components/ui/field";
@@ -39,7 +39,7 @@ function fileProblem(file: File): string | undefined {
 
 /** Validates type and size in the browser; the API validates again and dedupes by SHA-256. */
 export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogProps) {
-  const { actor } = useActor();
+  const { actor } = useSession();
   const upload = useUploadDocument();
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);

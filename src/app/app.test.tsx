@@ -35,21 +35,12 @@ describe("application shell", () => {
     expect(remediation).toHaveTextContent("of 12 drafted by agent");
   });
 
-  it("switches the dashboard and the audit identity when acting as the analyst", async () => {
-    const user = userEvent.setup();
-    renderAppAt("/");
-    await screen.findByRole("heading", { name: "Compliance overview" });
-
-    await user.click(screen.getByRole("button", { name: /Acting as Priya Sharma/ }));
-    await user.click(
-      within(screen.getByRole("listbox", { name: "Acting as" })).getByRole("option", {
-        name: /Rahul Mehta/,
-      }),
-    );
+  it("shows the analyst review view to an analyst account", async () => {
+    renderAppAt("/", { signedInAs: "usr-rahul" });
 
     expect(await screen.findByRole("heading", { name: "Review overview" })).toBeInTheDocument();
-    expect(screen.getByText("Now acting as Rahul Mehta")).toBeInTheDocument();
-    expect(window.localStorage.getItem("rulesight-actor")).toBe("rahul");
+    expect(screen.queryByRole("heading", { name: "Compliance overview" })).not.toBeInTheDocument();
+    expect(screen.getByText("Rahul Mehta")).toBeInTheDocument();
   });
 
   it("switches to the dark theme and remembers the choice", async () => {
@@ -84,13 +75,24 @@ describe("sign-in", () => {
     renderAppAt("/gaps", { signedInAs: null });
 
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
-    expect(screen.getByText(/there is no password/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("radio", { name: /Rahul Mehta/ }));
-    await user.click(screen.getByRole("button", { name: "Continue as Rahul Mehta" }));
+    await user.type(screen.getByLabelText("Email"), "rahul@rulesight.bank");
+    await user.type(screen.getByLabelText("Password"), "any-demo-password");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: /gaps/i })).toBeInTheDocument();
-    expect(window.localStorage.getItem("rulesight-session")).toBe("rahul");
+    expect(screen.getByText("Rahul Mehta")).toBeInTheDocument();
+  });
+
+  it("shows the server's message when sign-in is refused", async () => {
+    const user = userEvent.setup();
+    renderAppAt("/", { signedInAs: null });
+
+    await user.type(await screen.findByLabelText("Email"), "nobody@rulesight.bank");
+    await user.type(screen.getByLabelText("Password"), "x");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email or password.");
   });
 
   it("signs out and returns to the sign-in page", async () => {
