@@ -18,6 +18,7 @@ export function RunDetailPage() {
   const run = useRun(runId);
   return (
     <PageFrame
+      eyebrow="Agent run"
       title={run.data ? `Run ${run.data.run_id}` : "Run"}
       subtitle={
         run.data

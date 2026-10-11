@@ -27,6 +27,7 @@ export function RemediationPage() {
 
   return (
     <PageFrame
+      eyebrow="Remediation · drafted by agent, approved by people"
       title="Remediation"
       subtitle="Every action links back to its gap. Nothing moves past draft without an approval in the audit log."
     >

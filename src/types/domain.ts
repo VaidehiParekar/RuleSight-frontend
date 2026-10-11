@@ -169,29 +169,18 @@ export interface ChangeSide {
 
 export interface RegulatoryChange {
   id: string;
-  code?: string;
-  clause_ref?: string;
-  old_document_id?: string;
-  new_document_id?: string;
+  code: string;
   change_type: ChangeType;
   title: string;
   summary: string;
   significance: Significance;
-  before?: ChangeSide | null;
-  after?: ChangeSide | null;
-  old_text?: string | null;
-  new_text?: string | null;
+  before: ChangeSide | null;
+  after: ChangeSide | null;
   /** Phrases in `before` that were removed and in `after` that were added. */
-  removed_phrases?: string[];
-  added_phrases?: string[];
-  carried_over?: string[];
-  impact?: {
-    obligations?: string[];
-    controls?: string[];
-    gaps?: string[];
-    graph_affected_entities?: string[];
-    [key: string]: unknown;
-  };
+  removed_phrases: string[];
+  added_phrases: string[];
+  carried_over: string[];
+  impact: { obligations: string[]; controls: string[]; gaps: string[] };
 }
 
 export interface MissingCircular {

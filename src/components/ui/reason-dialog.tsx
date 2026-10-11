@@ -1,20 +1,17 @@
 import { useState } from "react";
 
-import { useActor } from "@/app/actor-context";
-import { Button } from "@/components/ui/button";
+import { useSession } from "@/app/auth-context";
+import { Button, type ButtonVariant } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Textarea } from "@/components/ui/field";
 
 interface ReasonDialogProps {
   title: string;
-  /** One sentence on what happens next. */
-  body?: string;
   confirmLabel: string;
   pending: boolean;
-  /** When false, no reason is asked for. */
+  /** When false, the reason is optional. */
   requireReason?: boolean;
-  /** Destructive actions (reject, dismiss) get a solid critical button. */
-  danger?: boolean;
+  variant?: ButtonVariant;
   onCancel: () => void;
   onConfirm: (reason: string) => void;
 }
@@ -22,29 +19,35 @@ interface ReasonDialogProps {
 /** Confirmation that names the acting user and, for reject or dismiss, requires a reason. */
 export function ReasonDialog({
   title,
-  body,
   confirmLabel,
   pending,
   requireReason = true,
-  danger = true,
+  variant = "danger",
   onCancel,
   onConfirm,
 }: ReasonDialogProps) {
-  const { actor } = useActor();
+  const { actor } = useSession();
   const [reason, setReason] = useState("");
-  const blocked = requireReason && !reason.trim();
+  const [error, setError] = useState<string | undefined>();
   return (
     <Dialog
+      eyebrow="Recorded in the audit log"
       title={title}
       size="sm"
       onClose={onCancel}
       footer={
         <>
-          <Button onClick={onCancel}>Cancel</Button>
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
           <Button
-            variant={danger ? "danger-solid" : "primary"}
-            disabled={pending || blocked}
+            variant={variant}
+            disabled={pending}
             onClick={() => {
+              if (requireReason && !reason.trim()) {
+                setError("A reason is required.");
+                return;
+              }
               onConfirm(reason.trim());
             }}
           >
@@ -53,28 +56,21 @@ export function ReasonDialog({
         </>
       }
     >
-      {body ? <p className="dialog-note">{body}</p> : null}
-      <p className="recorded-as">
-        This will be recorded as{" "}
-        <strong>
-          {actor.name}, {actor.role}
-        </strong>
-        .
+      <p className="dialog-note">
+        This will be recorded as {actor.name}, {actor.role}.
       </p>
-      {requireReason ? (
-        <Field label="Reason (required)" full>
-          {(props) => (
-            <Textarea
-              {...props}
-              rows={3}
-              value={reason}
-              onChange={(event) => {
-                setReason(event.target.value);
-              }}
-            />
-          )}
-        </Field>
-      ) : null}
+      <Field label={requireReason ? "Reason" : "Note (optional)"} error={error} full>
+        {(props) => (
+          <Textarea
+            {...props}
+            rows={3}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.target.value);
+            }}
+          />
+        )}
+      </Field>
     </Dialog>
   );
 }

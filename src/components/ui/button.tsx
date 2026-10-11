@@ -2,8 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant =
-  "primary" | "secondary" | "accent" | "ghost" | "danger" | "danger-solid";
+export type ButtonVariant = "primary" | "secondary" | "accent" | "ghost" | "danger";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;

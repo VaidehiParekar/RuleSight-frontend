@@ -1,116 +1,92 @@
+import { ChevronDown, FileQuestion, Upload } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
+import { KpiStrip } from "@/components/data-display/kpi-strip";
 import { LabelTag } from "@/components/data-display/status-tag";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
+import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
-import { useChangeComparison, useGaps, useObligations } from "@/hooks/use-rulesight";
+import { useChangeComparison } from "@/hooks/use-rulesight";
 import { CHANGE_TYPE, SIGNIFICANCE } from "@/lib/labels";
-import type { Gap, Obligation, RegulatoryChange, SourceDocument } from "@/types/domain";
+import type { RegulatoryChange } from "@/types/domain";
 
 /** Obligation-level comparison of NSM v1 (2024 circular) and v2 (2026 Master Direction). */
 export function ChangesPage() {
   const comparison = useChangeComparison();
-  const gaps = useGaps();
-  const obligations = useObligations();
 
   return (
     <PageFrame
+      eyebrow="Change intelligence · obligation-level comparison"
       title="Changes"
-      subtitle="Obligation-level comparison of two versions of an RBI instrument"
+      subtitle="What changed between versions, what was withdrawn, and which controls and gaps it affects."
     >
       <QueryView query={comparison} what="the comparison" rows={8}>
         {(data) => {
-          const changes = data.changes;
-          const missingCirculars = data.missing_circulars;
-          const modified = changes.filter((item) => item.change_type === "modified");
-          const withdrawn = changes.filter((item) => item.change_type === "withdrawn");
-          const consolidated = changes.find((item) => item.change_type === "consolidated");
-          const newGaps = [...new Set(changes.flatMap((item) => item.impact?.gaps ?? []))];
-          const gapByCode = new Map((gaps.data ?? []).map((gap) => [gap.code, gap]));
-          const summary: { label: string; n: number; glyph: string; tone: string; note: string }[] =
-            [
-              {
-                label: "Modified",
-                n: modified.length,
-                glyph: "~",
-                tone: "warning",
-                note: modified.map((item) => item.code).join(", ") || "None",
-              },
-              {
-                label: "Withdrawn",
-                n: withdrawn.length,
-                glyph: "−",
-                tone: "critical",
-                note: withdrawn.map((item) => item.code).join(", ") || "None",
-              },
-              {
-                label: "Carried over",
-                n: consolidated?.carried_over?.length ?? 0,
-                glyph: "=",
-                tone: "neutral",
-                note: consolidated?.code ? `${consolidated.code} · not new` : "None",
-              },
-              {
-                label: "Corpus gaps",
-                n: missingCirculars.length,
-                glyph: "?",
-                tone: "warning",
-                note: "Withdrawn circulars not ingested",
-              },
-              {
-                label: "New gaps",
-                n: newGaps.length,
-                glyph: "+",
-                tone: "critical",
-                note:
-                  newGaps
-                    .map(
-                      (code) =>
-                        `${code}${gapByCode.get(code) ? ` · ${gapByCode.get(code)?.priority ?? ""}` : ""}`,
-                    )
-                    .join(", ") || "None",
-              },
-            ];
-          const annexTotal = missingCirculars.length + withdrawn.length;
+          const modified = data.changes.filter((item) => item.change_type === "modified");
+          const withdrawn = data.changes.filter((item) => item.change_type === "withdrawn");
+          const consolidated = data.changes.find((item) => item.change_type === "consolidated");
+          const newGaps = new Set(data.changes.flatMap((item) => item.impact.gaps));
           return (
             <>
-              <div className="compare-pickers">
-                <VersionField label="Earlier version" document={data.old_document} />
-                <VersionField label="Later version" document={data.new_document} />
-              </div>
-
-              <div className="summary-strip" role="list" aria-label="Change summary">
-                {summary.map((item) => (
-                  <div key={item.label} role="listitem">
-                    <span className="eyebrow">{item.label}</span>
-                    <strong>
-                      {item.n}
-                      <i className={`text-${item.tone}`} aria-hidden="true">
-                        {item.glyph}
-                      </i>
-                    </strong>
-                    <span>{item.note}</span>
-                  </div>
-                ))}
-              </div>
-
-              <section className="corpus-gap" role="note">
-                <span className="q-mark" aria-hidden="true">
-                  ?
+              <Sheet className="compare-head">
+                <div>
+                  <span className="eyebrow">Earlier version</span>
+                  <strong className="serif struck">{data.old_document.title}</strong>
+                  <span className="mono">
+                    {data.old_document.version_label} · {data.old_document.reference}
+                  </span>
+                </div>
+                <span className="compare-arrow" aria-hidden="true">
+                  →
                 </span>
                 <div>
-                  <h3>Corpus gap: withdrawn circulars not in corpus</h3>
-                  <p>
-                    The v2 Annex withdraws {annexTotal} circulars. Only {withdrawn.length} is in the
-                    corpus. Not ingested: {missingCirculars.map((item) => item.date).join(", ")}.
-                    The 24 Apr 2025 circular, “Revised Timeline for Implementation”, is missing, so
-                    the timeline history may be incomplete. RuleSight has not inferred what these
+                  <span className="eyebrow">Later version</span>
+                  <strong className="serif">{data.new_document.title}</strong>
+                  <span className="mono">
+                    {data.new_document.version_label} · {data.new_document.reference}
+                  </span>
+                </div>
+              </Sheet>
+
+              <KpiStrip
+                label="Change summary"
+                items={[
+                  { label: "Modified", value: modified.length, note: "Requirement replaced" },
+                  {
+                    label: "Withdrawn",
+                    value: withdrawn.length,
+                    note: "Circular marked superseded",
+                  },
+                  {
+                    label: "Carried over",
+                    value: consolidated?.carried_over.length ?? 0,
+                    note: "Consolidated, not new",
+                  },
+                  {
+                    label: "New gaps",
+                    value: newGaps.size,
+                    note: [...newGaps].join(", ") || "None",
+                  },
+                ]}
+              />
+
+              <div className="notice warning corpus-gap" role="note">
+                <FileQuestion size={18} aria-hidden="true" />
+                <div>
+                  <strong>The v2 Annex withdraws 5 circulars. Only 1 is in the corpus.</strong>
+                  <span>
+                    Not ingested:{" "}
+                    {data.missing_circulars
+                      .map((item) => `${item.date} (row ${String(item.row)})`)
+                      .join(", ")}
+                    . The 24 Apr 2025 circular, “Revised Timeline for Implementation”, is missing,
+                    so the timeline history may be incomplete. RuleSight has not inferred what these
                     circulars say.
-                  </p>
+                  </span>
                   <ul className="missing-list">
-                    {missingCirculars.map((item) => (
+                    {data.missing_circulars.map((item) => (
                       <li key={item.row}>
                         <span className="mono">{item.reference}</span> · {item.date} ·{" "}
                         {item.subject}
@@ -118,39 +94,24 @@ export function ChangesPage() {
                     ))}
                   </ul>
                   <Link className="button accent small" to="/documents">
-                    Upload missing circular
+                    <Upload size={14} /> Upload missing circular
                   </Link>
                 </div>
-              </section>
+              </div>
 
               <section className="change-list" aria-label="Changes">
-                {changes
+                {data.changes
                   .filter((item) => item.change_type !== "consolidated")
                   .map((item) => (
-                    <ChangeCard key={item.id} change={item} gapByCode={gapByCode} />
+                    <ChangeCard key={item.id} change={item} />
                   ))}
-                {consolidated ? (
-                  <ConsolidatedRow change={consolidated} obligations={obligations.data ?? []} />
-                ) : null}
+                {consolidated ? <ConsolidatedRow change={consolidated} /> : null}
               </section>
             </>
           );
         }}
       </QueryView>
     </PageFrame>
-  );
-}
-
-function VersionField({ label, document }: { label: string; document: SourceDocument }) {
-  return (
-    <div className="field">
-      <span className="field-label">{label}</span>
-      <span className="control listbox-trigger" title={document.reference}>
-        <span className="listbox-value">
-          {document.title} · {document.version_label}
-        </span>
-      </span>
-    </div>
   );
 }
 
@@ -171,130 +132,92 @@ function markPhrases(text: string, phrases: string[], className: string): ReactN
   );
 }
 
-function ChangeCard({
-  change,
-  gapByCode,
-}: {
-  change: RegulatoryChange;
-  gapByCode: Map<string, Gap>;
-}) {
-  const compared = change.change_type === "modified" && change.before && change.after;
-  const impactObligations = change.impact?.obligations ?? [];
-  const impactControls = change.impact?.controls ?? [];
-  const impactGaps = change.impact?.gaps ?? [];
-  const hasImpact = impactObligations.length + impactControls.length + impactGaps.length > 0;
+function ChangeCard({ change }: { change: RegulatoryChange }) {
   return (
     <Sheet className="change-card">
-      <header className={compared ? "ruled" : undefined}>
+      <header>
+        <span className="mono">{change.code}</span>
         <LabelTag value={CHANGE_TYPE[change.change_type]} />
-        <span className="mono muted">{change.code}</span>
-        <strong>{change.title}</strong>
         <LabelTag value={SIGNIFICANCE[change.significance]} outline />
       </header>
-      {compared && change.before && change.after ? (
+      <h2>{change.title}</h2>
+      <p className="change-summary">{change.summary}</p>
+      {change.before && change.after ? (
         <div className="compare-columns">
-          <div className="compare-side">
+          <div className="compare-side before">
             <span className="eyebrow">Before · {change.before.ref}</span>
             <blockquote>
-              {markPhrases(change.before.text, change.removed_phrases ?? [], "removed")}
+              {markPhrases(change.before.text, change.removed_phrases, "removed")}
             </blockquote>
           </div>
-          <div className="compare-side">
+          <div className="compare-side after">
             <span className="eyebrow">After · {change.after.ref}</span>
-            <blockquote>
-              {markPhrases(change.after.text, change.added_phrases ?? [], "added")}
-              <span className="added-glyph" aria-label="added">
-                +
-              </span>
-            </blockquote>
+            <blockquote>{markPhrases(change.after.text, change.added_phrases, "added")}</blockquote>
           </div>
         </div>
-      ) : (
-        <p className="change-summary">{change.summary}</p>
-      )}
-      {hasImpact ? (
-        <footer className="impact">
-          <span className="eyebrow">Impact</span>
-          {impactObligations.length ? (
-            <span>
-              Obligation{impactObligations.length > 1 ? "s" : ""}{" "}
-              {impactObligations.map((code, index) => (
-                <span key={code}>
-                  {index ? ", " : ""}
-                  <Link className="id-link" to={`/obligations?select=${code.toLowerCase()}`}>
-                    {code}
-                  </Link>
-                </span>
-              ))}
-            </span>
-          ) : null}
-          {impactControls.length ? (
-            <span>
-              Control{" "}
-              {impactControls.map((code) => (
-                <Link key={code} className="id-link" to="/controls">
-                  {code}
-                </Link>
-              ))}
-            </span>
-          ) : null}
-          {impactGaps.map((code) => (
-            <span key={code}>
-              New gap{" "}
-              <Link className="id-link primary" to={`/gaps/${code.toLowerCase()}`}>
-                {code}
-                {gapByCode.get(code) ? ` · ${gapByCode.get(code)?.priority ?? ""}` : ""}
-              </Link>
-            </span>
-          ))}
-        </footer>
       ) : null}
+      <footer className="impact">
+        <span className="eyebrow">Impact</span>
+        {change.impact.obligations.length +
+          change.impact.controls.length +
+          change.impact.gaps.length ===
+        0 ? (
+          <span className="muted">No obligations or controls affected.</span>
+        ) : (
+          <>
+            {change.impact.obligations.map((code) => (
+              <Link key={code} className="id-link" to={`/obligations?select=${code.toLowerCase()}`}>
+                {code}
+              </Link>
+            ))}
+            {change.impact.controls.map((code) => (
+              <Link key={code} className="id-link" to="/controls">
+                {code}
+              </Link>
+            ))}
+            {change.impact.gaps.map((code) => (
+              <Link key={code} className="id-link critical" to={`/gaps/${code.toLowerCase()}`}>
+                {code} · new gap
+              </Link>
+            ))}
+          </>
+        )}
+      </footer>
     </Sheet>
   );
 }
 
-function ConsolidatedRow({
-  change,
-  obligations,
-}: {
-  change: RegulatoryChange;
-  obligations: Obligation[];
-}) {
+function ConsolidatedRow({ change }: { change: RegulatoryChange }) {
   const [open, setOpen] = useState(false);
-  const carriedOver = change.carried_over ?? [];
-  const byCode = new Map(obligations.map((item) => [item.code, item]));
   return (
-    <Sheet className="change-card">
-      <button
-        type="button"
-        className="change-toggle"
+    <Sheet className="change-card consolidated">
+      <header>
+        <span className="mono">{change.code}</span>
+        <LabelTag value={CHANGE_TYPE[change.change_type]} />
+      </header>
+      <h2>{change.title}</h2>
+      <p className="change-summary">{change.summary}</p>
+      <Button
+        size="sm"
+        variant="ghost"
         aria-expanded={open}
         onClick={() => {
           setOpen((value) => !value);
         }}
       >
-        <LabelTag value={CHANGE_TYPE[change.change_type]} />
-        <span className="mono muted">{change.code}</span>
-        <span>{change.summary}</span>
-        <span className="text-button">
-          {open ? "Hide list" : `Show the ${String(carriedOver.length)} requirements`}
-        </span>
-      </button>
+        <ChevronDown size={14} className={open ? "rotate" : undefined} /> {open ? "Hide" : "Show"}{" "}
+        the {change.carried_over.length} requirements
+      </Button>
       {open ? (
         <ul className="carried-list">
-          {carriedOver.map((code) => {
-            const obligation = byCode.get(code);
-            return (
-              <li key={code}>
-                <Link className="mono code-cell" to={`/obligations?select=${code.toLowerCase()}`}>
-                  {code}
-                </Link>
-                <span className="mono muted">{obligation?.clause_ref ?? ""}</span>
-                <span>{obligation?.summary ?? ""}</span>
-                <span className="muted">Carried over</span>
-              </li>
-            );
-          })}
+          {change.carried_over.map((code) => (
+            <li key={code}>
+              <Link className="id-link" to={`/obligations?select=${code.toLowerCase()}`}>
+                {code}
+              </Link>{" "}
+              carried over from DCM(NPD) No.S488 dated 01.07.2022 (not in corpus)
+            </li>
+          ))}
         </ul>
       ) : null}
     </Sheet>

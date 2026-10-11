@@ -1,29 +1,26 @@
-import { useTheme, type ThemeMode } from "@/app/theme-context";
+import { Moon, Sun } from "lucide-react";
 
-const OPTIONS: { value: ThemeMode; label: string }[] = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
+import { useTheme } from "@/app/theme-context";
 
-/** System, light or dark. Until the user chooses, the OS setting applies. */
+/** Switches between light and dark. Until the user chooses, the OS setting applies. */
 export function ThemeToggle() {
-  const { mode, setMode } = useTheme();
+  const { resolved, setMode } = useTheme();
+  const next = resolved === "light" ? "dark" : "light";
   return (
-    <div className="segmented compact" role="radiogroup" aria-label="Theme">
-      {OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={mode === option.value}
-          onClick={() => {
-            setMode(option.value);
-          }}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      className="theme-toggle"
+      aria-label={`Switch to ${next} theme`}
+      onClick={() => {
+        setMode(next);
+      }}
+    >
+      {resolved === "light" ? (
+        <Moon size={16} aria-hidden="true" />
+      ) : (
+        <Sun size={16} aria-hidden="true" />
+      )}
+      <span>{resolved === "light" ? "Dark" : "Light"}</span>
+    </button>
   );
 }

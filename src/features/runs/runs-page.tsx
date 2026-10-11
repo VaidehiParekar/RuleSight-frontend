@@ -17,6 +17,7 @@ export function RunsPage() {
   const navigate = useNavigate();
   return (
     <PageFrame
+      eyebrow="Observability · agent_runs"
       title="Agent runs"
       subtitle="Each pipeline run, its nodes, LLM calls and tokens. Cached calls make reruns deterministic."
     >

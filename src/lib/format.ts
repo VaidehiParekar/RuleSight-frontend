@@ -56,17 +56,3 @@ export function formatDuration(ms: number): string {
 export function formatScore(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
-
-const stampFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  timeZone: TIME_ZONE,
-});
-
-/** "11 Oct 14:02", for dense ledgers whose header already says the times are IST. */
-export function formatStamp(iso: string | null | undefined): string {
-  if (!iso || typeof iso !== "string") return "—";
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return "—";
-  return `${stampFormatter.format(date)} ${timeFormatter.format(date)}`;
-}

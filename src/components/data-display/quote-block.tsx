@@ -8,8 +8,7 @@ interface QuoteBlockProps {
   source: string;
   /** True when the critic confirmed the quote is an exact substring of the source document. */
   verified?: boolean;
-  /** reading: default; large: the trace's opening clause; compact: one-line policy text. */
-  size?: "reading" | "large" | "compact";
+  size?: "reading" | "compact";
 }
 
 /**
@@ -24,18 +23,8 @@ export function QuoteBlock({
   size = "reading",
 }: QuoteBlockProps) {
   const index = highlight ? text.indexOf(highlight) : -1;
-  if (size === "compact") {
-    return (
-      <figure className="quote compact">
-        <blockquote>“{text}”</blockquote>
-        <figcaption>{source}</figcaption>
-      </figure>
-    );
-  }
   return (
-    <figure
-      className={cn("quote", size === "large" && "large", verified === false && "unverified")}
-    >
+    <figure className={cn("quote", size)}>
       <blockquote>
         {index >= 0 && highlight ? (
           <>
@@ -48,15 +37,11 @@ export function QuoteBlock({
         )}
       </blockquote>
       <figcaption>
-        <span>{source}</span>
+        <span className="mono">{source}</span>
         {verified === undefined ? null : verified ? (
-          <StatusTag tone="success" icon="✓">
-            Verbatim
-          </StatusTag>
+          <StatusTag tone="success">Verbatim ✓</StatusTag>
         ) : (
-          <StatusTag tone="warning" icon="!">
-            Quote not verified
-          </StatusTag>
+          <StatusTag tone="warning">Quote not verified</StatusTag>
         )}
       </figcaption>
     </figure>

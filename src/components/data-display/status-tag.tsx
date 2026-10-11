@@ -4,54 +4,25 @@ import type { LabelTone, Tone } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 interface StatusTagProps {
-  tone?: Tone | "plain";
+  tone?: Tone;
   outline?: boolean;
-  small?: boolean;
-  /** Short glyph before the label (✓, !, ~, ⊘). Colour is never the only cue. */
-  icon?: string;
-  struck?: boolean;
-  title?: string;
   children: ReactNode;
 }
 
-/** Small status label: tinted or outlined, always with text. */
-export function StatusTag({
-  tone = "neutral",
-  outline = false,
-  small = false,
-  icon,
-  struck = false,
-  title,
-  children,
-}: StatusTagProps) {
+/** Small status label: tinted background, a dot, and text. Colour is never the only cue. */
+export function StatusTag({ tone = "neutral", outline = false, children }: StatusTagProps) {
   return (
-    <span
-      className={cn("status", tone, outline && "outline", small && "small", struck && "struck")}
-      title={title}
-    >
-      {icon ? <span aria-hidden="true">{icon}</span> : null}
+    <span className={cn("status", tone, outline && "outline")}>
+      <span className="status-dot" aria-hidden="true" />
       {children}
     </span>
   );
 }
 
 /** Renders a label/tone pair from lib/labels.ts. */
-export function LabelTag({
-  value,
-  outline,
-  struck,
-}: {
-  value: LabelTone;
-  outline?: boolean;
-  struck?: boolean;
-}) {
+export function LabelTag({ value, outline }: { value: LabelTone; outline?: boolean }) {
   return (
-    <StatusTag
-      tone={value.tone}
-      outline={outline ?? value.outline ?? false}
-      icon={value.icon}
-      struck={struck ?? false}
-    >
+    <StatusTag tone={value.tone} outline={outline ?? false}>
       {value.label}
     </StatusTag>
   );
