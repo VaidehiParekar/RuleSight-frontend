@@ -37,8 +37,8 @@ export function DashboardPage() {
     <PageFrame
       eyebrow={
         isCompliance
-          ? `Decision brief${summary.data ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : ""}`
-          : `Review desk${summary.data ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : ""}`
+          ? `Decision brief${summary.data?.last_run_at ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : ""}`
+          : `Review desk${summary.data?.last_run_at ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : ""}`
       }
       title={isCompliance ? "Compliance overview" : "Analyst review queue"}
       subtitle={
