@@ -3,9 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="RuleSight regulatory compliance intelligence (scaffold)" />
+    <meta
+      name="description"
+      content="RuleSight maps RBI regulations to bank controls, finds gaps and supports remediation with human approval."
+    />
+    <meta name="theme-color" content="#FAF5EE" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17121C" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>RuleSight</title>
+    <title>RuleSight · Regulatory intelligence</title>
+    <script>
+      // Apply a saved theme before first paint so the page does not flash.
+      try {
+        var theme = localStorage.getItem("rulesight-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch (error) {
+        /* storage unavailable: follow the OS setting */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

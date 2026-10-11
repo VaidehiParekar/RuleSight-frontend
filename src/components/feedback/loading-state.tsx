@@ -1,16 +1,17 @@
 interface LoadingStateProps {
   message?: string;
+  /** Number of placeholder rows to draw, shaped like the content that will load. */
+  rows?: number;
 }
 
-/** Accessible loading indicator. role="status" announces the message politely. */
-export function LoadingState({ message = "Loading…" }: LoadingStateProps) {
+/** Accessible loading indicator: soft pulse blocks plus a polite status message. */
+export function LoadingState({ message = "Loading…", rows = 4 }: LoadingStateProps) {
   return (
-    <div role="status" aria-live="polite" className="flex items-center gap-3 py-4 text-sm">
-      <span
-        aria-hidden="true"
-        className="size-4 animate-spin rounded-full border-2 border-border border-t-primary"
-      />
-      <span className="text-muted-foreground">{message}</span>
+    <div className="loading-state" role="status" aria-live="polite">
+      <span className="sr-only">{message}</span>
+      {Array.from({ length: rows }, (_, index) => (
+        <span className="pulse" key={index} style={{ width: `${String(92 - index * 9)}%` }} />
+      ))}
     </div>
   );
 }

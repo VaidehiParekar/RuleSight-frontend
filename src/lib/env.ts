@@ -12,6 +12,14 @@ const envSchema = z.object({
     .refine((value) => value.startsWith("/") || /^https?:\/\//.test(value), {
       message: "must be a relative path starting with '/' or an http(s) URL",
     }),
+  /**
+   * Serve demo data from src/mocks instead of the API. Defaults to true while the
+   * backend endpoints in TEAM_PLAN_ONE_NIGHT.md §5 are being built.
+   */
+  VITE_USE_MOCKS: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

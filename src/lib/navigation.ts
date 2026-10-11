@@ -1,20 +1,55 @@
+import {
+  Activity,
+  BookOpenText,
+  CircleAlert,
+  ClipboardCheck,
+  FileDiff,
+  Files,
+  LayoutDashboard,
+  ListChecks,
+  Network,
+  ShieldCheck,
+  type LucideIcon,
+} from "lucide-react";
+
 export interface NavItem {
   readonly label: string;
   readonly path: string;
-  /** Scaffold-only flag: true when the feature has a real screen (none yet beyond the dashboard). */
-  readonly implemented: boolean;
+  readonly icon: LucideIcon;
 }
 
-/** Primary navigation. Paths mirror the feature folders under src/features. */
-export const NAV_ITEMS: readonly NavItem[] = [
-  { label: "Dashboard", path: "/", implemented: true },
-  { label: "Documents", path: "/documents", implemented: false },
-  { label: "Regulations", path: "/regulations", implemented: false },
-  { label: "Obligations", path: "/obligations", implemented: false },
-  { label: "Controls", path: "/controls", implemented: false },
-  { label: "Evidence", path: "/evidence", implemented: false },
-  { label: "Assessments", path: "/assessments", implemented: false },
-  { label: "Findings", path: "/findings", implemented: false },
-  { label: "Remediation", path: "/remediation", implemented: false },
-  { label: "Audit", path: "/audit", implemented: false },
+export interface NavGroup {
+  readonly label: string;
+  readonly items: readonly NavItem[];
+}
+
+/** Primary navigation, grouped as in the design. Paths mirror src/features. */
+export const NAV_GROUPS: readonly NavGroup[] = [
+  { label: "Overview", items: [{ label: "Dashboard", path: "/", icon: LayoutDashboard }] },
+  {
+    label: "Library",
+    items: [
+      { label: "Documents", path: "/documents", icon: Files },
+      { label: "Changes", path: "/changes", icon: FileDiff },
+    ],
+  },
+  {
+    label: "Analysis",
+    items: [
+      { label: "Obligations", path: "/obligations", icon: BookOpenText },
+      { label: "Controls", path: "/controls", icon: ShieldCheck },
+      { label: "Gaps", path: "/gaps", icon: CircleAlert },
+      { label: "Remediation", path: "/remediation", icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { label: "Graph", path: "/graph", icon: Network },
+      { label: "Agent runs", path: "/runs", icon: Activity },
+      { label: "Audit log", path: "/audit", icon: ListChecks },
+    ],
+  },
 ];
+
+export const NAV_ITEMS: readonly NavItem[] = NAV_GROUPS.flatMap((group) => group.items);

@@ -1,34 +1,70 @@
-import { cva, type VariantProps } from "class-variance-authority";
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:opacity-90",
-        outline: "border border-border bg-card text-foreground hover:bg-muted",
-        ghost: "text-foreground hover:bg-muted",
-      },
-      size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 px-3",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  },
-);
+export type ButtonVariant = "primary" | "secondary" | "accent" | "ghost" | "danger";
 
-export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: "md" | "sm";
+  icon?: ReactNode;
+}
 
-export function Button({ className, variant, size, type = "button", ...props }: ButtonProps) {
+/**
+ * Text button. Labels should be verbs that describe the outcome
+ * ("Approve remediation", not "Submit").
+ */
+export function Button({
+  variant = "secondary",
+  size = "md",
+  icon,
+  className,
+  type = "button",
+  children,
+  ...props
+}: ButtonProps) {
   return (
-    <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+    <button
+      type={type}
+      className={cn("button", variant, size === "sm" && "small", className)}
+      {...props}
+    >
+      {icon}
+      {children}
+    </button>
   );
+}
+
+export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Required: icon-only buttons need an accessible name. */
+  label: string;
+}
+
+export function IconButton({
+  label,
+  className,
+  type = "button",
+  children,
+  ...props
+}: IconButtonProps) {
+  return (
+    <button
+      type={type}
+      className={cn("icon-button", className)}
+      aria-label={label}
+      title={label}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Inline link-style action, used for "View all" style navigation. */
+export function TextButton({
+  className,
+  type = "button",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type={type} className={cn("text-button", className)} {...props} />;
 }

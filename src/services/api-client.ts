@@ -14,12 +14,13 @@ export type ApiErrorCode =
  */
 export class ApiError extends Error {
   readonly status: number;
-  readonly code: ApiErrorCode | string;
+  /** One of ApiErrorCode for client-side failures, or the backend error code. */
+  readonly code: string;
   readonly requestId: string | undefined;
 
   constructor(options: {
     status: number;
-    code: ApiErrorCode | string;
+    code: string;
     message: string;
     requestId?: string | undefined;
   }) {
@@ -83,6 +84,8 @@ export async function apiGet<S extends z.ZodType>(
   schema: S,
   options: RequestOptions = {},
 ): Promise<z.output<S>> {
+  // Validate the path before the request, so a programming error is not reported as a network error.
+  const url = buildUrl(path);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
     controller.abort(new DOMException("timeout", "TimeoutError"));
@@ -95,7 +98,7 @@ export async function apiGet<S extends z.ZodType>(
   try {
     let response: Response;
     try {
-      response = await fetch(buildUrl(path), {
+      response = await fetch(url, {
         method: "GET",
         headers: { Accept: "application/json" },
         credentials: "same-origin",
@@ -136,7 +139,7 @@ export async function apiGet<S extends z.ZodType>(
         message: "The RuleSight API returned an unexpected response.",
       });
     }
-    return parsed.data as z.output<S>;
+    return parsed.data;
   } finally {
     clearTimeout(timeoutId);
     options.signal?.removeEventListener("abort", forwardAbort);
