@@ -1,11 +1,8 @@
-import { env } from "@/lib/env";
+import { mockDataEnabled } from "@/lib/env";
+import { toActor } from "@/lib/roles";
 import * as db from "@/mocks/mock-db";
-import {
-  apiFetchJson,
-  apiPatch,
-  apiPost,
-  apiUploadForm,
-} from "@/services/api-client";
+import { ApiError, apiFetchJson, apiPatch, apiPost, apiUploadForm } from "@/services/api-client";
+import { getSessionUser } from "@/services/auth-session";
 import type {
   Actor,
   AgentRun,
@@ -26,7 +23,28 @@ import type {
 
 const isTest = import.meta.env.MODE === "test";
 const LATENCY_MS = isTest ? 0 : 320;
-const shouldUseMocks = env.VITE_USE_MOCKS || isTest;
+const shouldUseMocks = mockDataEnabled;
+
+/**
+ * Who a mock write is recorded under. The live API takes this from the bearer token;
+ * mock mode reads the signed-in user the same way.
+ */
+function mockActor(): Actor {
+  const user = getSessionUser();
+  if (!user) {
+    throw new ApiError({ status: 401, code: "unauthorized", message: "Sign in to continue." });
+  }
+  return toActor(user);
+}
+
+/** Runs a mock write as the signed-in user, rejecting (not throwing) when nobody is. */
+function withMockActor<T>(write: (actor: Actor) => Promise<T>): Promise<T> {
+  try {
+    return write(mockActor());
+  } catch (error: unknown) {
+    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+  }
+}
 
 async function mock<T>(produce: (now: number) => T): Promise<T> {
   if (LATENCY_MS > 0) {
@@ -43,17 +61,12 @@ export const getDashboardSummary = (): Promise<DashboardSummary> =>
 
 /** GET /documents */
 export const listDocuments = (): Promise<SourceDocument[]> =>
-  shouldUseMocks
-    ? mock(db.listDocuments)
-    : apiFetchJson<SourceDocument[]>("/documents");
+  shouldUseMocks ? mock(db.listDocuments) : apiFetchJson<SourceDocument[]>("/documents");
 
 /** POST /documents (multipart) */
-export const uploadDocument = (
-  input: db.NewDocumentInput,
-  actor: Actor,
-): Promise<SourceDocument> => {
+export const uploadDocument = (input: db.NewDocumentInput): Promise<SourceDocument> => {
   if (shouldUseMocks) {
-    return mock((now) => db.addDocument(input, actor, now));
+    return withMockActor((actor) => mock((now) => db.addDocument(input, actor, now)));
   }
   const formData = new FormData();
   if (input.file) {
@@ -67,20 +80,18 @@ export const uploadDocument = (
   if (input.regulator) formData.append("regulator", input.regulator);
   if (input.version_label) formData.append("version_label", input.version_label);
   if (input.supersedes_id) formData.append("supersedes_id", input.supersedes_id);
-  return apiUploadForm<SourceDocument>("/documents", formData, actor);
+  return apiUploadForm<SourceDocument>("/documents", formData);
 };
 
 /** POST /pipeline/run */
-export const startPipelineRun = (actor: Actor): Promise<AgentRun> =>
+export const startPipelineRun = (): Promise<AgentRun> =>
   shouldUseMocks
-    ? mock((now) => db.startRun(actor, now))
-    : apiPost<AgentRun>("/pipeline/run", {}, actor);
+    ? withMockActor((actor) => mock((now) => db.startRun(actor, now)))
+    : apiPost<AgentRun>("/pipeline/run", {});
 
 /** GET /pipeline/runs */
 export const listRuns = (): Promise<AgentRun[]> =>
-  shouldUseMocks
-    ? mock(db.listRuns)
-    : apiFetchJson<AgentRun[]>("/pipeline/runs");
+  shouldUseMocks ? mock(db.listRuns) : apiFetchJson<AgentRun[]>("/pipeline/runs");
 
 /** GET /pipeline/runs/{run_id} */
 export const getRun = (id: string): Promise<AgentRun> =>
@@ -90,80 +101,58 @@ export const getRun = (id: string): Promise<AgentRun> =>
 
 /** GET /obligations */
 export const listObligations = (): Promise<Obligation[]> =>
-  shouldUseMocks
-    ? mock(db.listObligations)
-    : apiFetchJson<Obligation[]>("/obligations");
+  shouldUseMocks ? mock(db.listObligations) : apiFetchJson<Obligation[]>("/obligations");
 
 /** PATCH /obligations/{id} */
-export const updateObligation = (
-  id: string,
-  update: db.ObligationUpdate,
-  actor: Actor,
-): Promise<Obligation> =>
+export const updateObligation = (id: string, update: db.ObligationUpdate): Promise<Obligation> =>
   shouldUseMocks
-    ? mock((now) => db.updateObligation(id, update, actor, now))
-    : apiPatch<Obligation>(`/obligations/${id}`, update, actor);
+    ? withMockActor((actor) => mock((now) => db.updateObligation(id, update, actor, now)))
+    : apiPatch<Obligation>(`/obligations/${id}`, update);
 
 /** GET /controls */
 export const listControls = (): Promise<Control[]> =>
-  shouldUseMocks
-    ? mock(db.listControls)
-    : apiFetchJson<Control[]>("/controls");
+  shouldUseMocks ? mock(db.listControls) : apiFetchJson<Control[]>("/controls");
 
 /** GET /mappings */
 export const listMappings = (): Promise<Mapping[]> =>
-  shouldUseMocks
-    ? mock(db.listMappings)
-    : apiFetchJson<Mapping[]>("/mappings");
+  shouldUseMocks ? mock(db.listMappings) : apiFetchJson<Mapping[]>("/mappings");
 
 /** PATCH /mappings/{id} */
-export const updateMapping = (
-  id: string,
-  status: MappingStatus,
-  actor: Actor,
-): Promise<Mapping> =>
+export const updateMapping = (id: string, status: MappingStatus): Promise<Mapping> =>
   shouldUseMocks
-    ? mock((now) => db.updateMapping(id, status, actor, now))
-    : apiPatch<Mapping>(`/mappings/${id}`, { status }, actor);
+    ? withMockActor((actor) => mock((now) => db.updateMapping(id, status, actor, now)))
+    : apiPatch<Mapping>(`/mappings/${id}`, { status });
 
 /** GET /gaps (sorted by risk_score desc) */
 export const listGaps = (): Promise<Gap[]> =>
-  shouldUseMocks
-    ? mock(db.listGaps)
-    : apiFetchJson<Gap[]>("/gaps");
+  shouldUseMocks ? mock(db.listGaps) : apiFetchJson<Gap[]>("/gaps");
 
 /** GET /gaps/{id}/trace */
 export const getGapTrace = (id: string): Promise<GapTrace> =>
-  shouldUseMocks
-    ? mock(() => db.getGapTrace(id))
-    : apiFetchJson<GapTrace>(`/gaps/${id}/trace`);
+  shouldUseMocks ? mock(() => db.getGapTrace(id)) : apiFetchJson<GapTrace>(`/gaps/${id}/trace`);
 
 /** PATCH /gaps/{id} */
 export const updateGapStatus = (
   id: string,
   status: GapStatus,
   reason: string | null,
-  actor: Actor,
 ): Promise<Gap> =>
   shouldUseMocks
-    ? mock((now) => db.updateGapStatus(id, status, reason, actor, now))
-    : apiPatch<Gap>(`/gaps/${id}`, { status, reason }, actor);
+    ? withMockActor((actor) => mock((now) => db.updateGapStatus(id, status, reason, actor, now)))
+    : apiPatch<Gap>(`/gaps/${id}`, { status, reason });
 
 /** GET /remediations (via gaps) */
 export const listRemediations = (): Promise<Remediation[]> =>
-  shouldUseMocks
-    ? mock(db.listRemediations)
-    : apiFetchJson<Remediation[]>("/remediations");
+  shouldUseMocks ? mock(db.listRemediations) : apiFetchJson<Remediation[]>("/remediations");
 
 /** PATCH /remediations/{id} */
 export const updateRemediation = (
   id: string,
   update: db.RemediationUpdate,
-  actor: Actor,
 ): Promise<Remediation> =>
   shouldUseMocks
-    ? mock((now) => db.updateRemediation(id, update, actor, now))
-    : apiPatch<Remediation>(`/remediations/${id}`, update, actor);
+    ? withMockActor((actor) => mock((now) => db.updateRemediation(id, update, actor, now)))
+    : apiPatch<Remediation>(`/remediations/${id}`, update);
 
 /** POST /changes/compare */
 export const getChangeComparison = () =>
@@ -176,20 +165,14 @@ export const getChangeComparison = () =>
 
 /** GET /audit */
 export const listAudit = (): Promise<AuditEntry[]> =>
-  shouldUseMocks
-    ? mock(db.listAudit)
-    : apiFetchJson<AuditEntry[]>("/audit");
+  shouldUseMocks ? mock(db.listAudit) : apiFetchJson<AuditEntry[]>("/audit");
 
 /** GET /eval/latest */
 export const getEvalReport = (): Promise<EvalReport> =>
-  shouldUseMocks
-    ? mock(db.getEvalReport)
-    : apiFetchJson<EvalReport>("/eval/latest");
+  shouldUseMocks ? mock(db.getEvalReport) : apiFetchJson<EvalReport>("/eval/latest");
 
 /** GET /graph */
 export const getKnowledgeGraph = (): Promise<KnowledgeGraph> =>
-  shouldUseMocks
-    ? mock(db.getKnowledgeGraph)
-    : apiFetchJson<KnowledgeGraph>("/graph");
+  shouldUseMocks ? mock(db.getKnowledgeGraph) : apiFetchJson<KnowledgeGraph>("/graph");
 
 export type { NewDocumentInput, ObligationUpdate, RemediationUpdate } from "@/mocks/mock-db";

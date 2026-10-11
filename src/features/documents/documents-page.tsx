@@ -1,6 +1,7 @@
 import { Activity, Check, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useSession } from "@/app/auth-context";
 import { LabelTag, StatusTag } from "@/components/data-display/status-tag";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
@@ -15,6 +16,7 @@ import { UploadDialog } from "@/features/documents/upload-dialog";
 import { useDocuments, useStartPipelineRun } from "@/hooks/use-rulesight";
 import { formatDateTime } from "@/lib/format";
 import { DOC_STATUS, DOC_TYPE } from "@/lib/labels";
+import { PERMISSIONS } from "@/lib/roles";
 import type { DocType, SourceDocument } from "@/types/domain";
 
 const TYPE_ORDER: DocType[] = ["regulation", "policy", "rcm", "evidence"];
@@ -22,7 +24,10 @@ const TYPE_ORDER: DocType[] = ["regulation", "policy", "rcm", "evidence"];
 export function DocumentsPage() {
   const documents = useDocuments();
   const startRun = useStartPipelineRun();
+  const { can } = useSession();
   const { notify } = useToast();
+  const canRunPipeline = can(PERMISSIONS.runPipeline);
+  const canUpload = can(PERMISSIONS.uploadDocuments);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [selected, setSelected] = useState<SourceDocument | null>(null);
@@ -37,32 +42,36 @@ export function DocumentsPage() {
       subtitle="Real RBI source text and fictional Nova Trust Bank materials, with provenance kept visible."
       action={
         <>
-          <Button
-            icon={<Activity size={15} />}
-            disabled={startRun.isPending}
-            onClick={() => {
-              startRun.mutate(undefined, {
-                onSuccess: (run) => {
-                  setActiveRunId(run.id);
-                  notify({
-                    title: "Pipeline started",
-                    detail: `Run ${run.run_id} is processing all ready documents.`,
-                  });
-                },
-              });
-            }}
-          >
-            Run pipeline
-          </Button>
-          <Button
-            variant="primary"
-            icon={<Upload size={15} />}
-            onClick={() => {
-              setUploadOpen(true);
-            }}
-          >
-            Upload document
-          </Button>
+          {canRunPipeline ? (
+            <Button
+              icon={<Activity size={15} />}
+              disabled={startRun.isPending}
+              onClick={() => {
+                startRun.mutate(undefined, {
+                  onSuccess: (run) => {
+                    setActiveRunId(run.id);
+                    notify({
+                      title: "Pipeline started",
+                      detail: `Run ${run.run_id} is processing all ready documents.`,
+                    });
+                  },
+                });
+              }}
+            >
+              Run pipeline
+            </Button>
+          ) : null}
+          {canUpload ? (
+            <Button
+              variant="primary"
+              icon={<Upload size={15} />}
+              onClick={() => {
+                setUploadOpen(true);
+              }}
+            >
+              Upload document
+            </Button>
+          ) : null}
         </>
       }
     >

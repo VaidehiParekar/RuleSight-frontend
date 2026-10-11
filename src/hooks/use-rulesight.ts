@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useActor } from "@/app/actor-context";
 import { queryKeys } from "@/lib/query-keys";
 import * as api from "@/services/rulesight-api";
 import type { GapStatus, MappingStatus } from "@/types/domain";
@@ -81,42 +80,37 @@ function useRefreshAll() {
 }
 
 export function useUploadDocument() {
-  const { actor } = useActor();
   const onSuccess = useRefreshAll();
   return useMutation({
-    mutationFn: (input: api.NewDocumentInput) => api.uploadDocument(input, actor),
+    mutationFn: (input: api.NewDocumentInput) => api.uploadDocument(input),
     onSuccess,
   });
 }
 
 export function useStartPipelineRun() {
-  const { actor } = useActor();
   const onSuccess = useRefreshAll();
-  return useMutation({ mutationFn: () => api.startPipelineRun(actor), onSuccess });
+  return useMutation({ mutationFn: () => api.startPipelineRun(), onSuccess });
 }
 
 export function useUpdateObligation() {
-  const { actor } = useActor();
   const onSuccess = useRefreshAll();
   return useMutation({
     mutationFn: ({ id, update }: { id: string; update: api.ObligationUpdate }) =>
-      api.updateObligation(id, update, actor),
+      api.updateObligation(id, update),
     onSuccess,
   });
 }
 
 export function useUpdateMapping() {
-  const { actor } = useActor();
   const onSuccess = useRefreshAll();
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: MappingStatus }) =>
-      api.updateMapping(id, status, actor),
+      api.updateMapping(id, status),
     onSuccess,
   });
 }
 
 export function useUpdateGapStatus() {
-  const { actor } = useActor();
   const onSuccess = useRefreshAll();
   return useMutation({
     mutationFn: ({
@@ -127,17 +121,16 @@ export function useUpdateGapStatus() {
       id: string;
       status: GapStatus;
       reason: string | null;
-    }) => api.updateGapStatus(id, status, reason, actor),
+    }) => api.updateGapStatus(id, status, reason),
     onSuccess,
   });
 }
 
 export function useUpdateRemediation() {
-  const { actor } = useActor();
   const onSuccess = useRefreshAll();
   return useMutation({
     mutationFn: ({ id, update }: { id: string; update: api.RemediationUpdate }) =>
-      api.updateRemediation(id, update, actor),
+      api.updateRemediation(id, update),
     onSuccess,
   });
 }

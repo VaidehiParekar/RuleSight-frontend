@@ -23,9 +23,11 @@ export type ChangeType = "modified" | "withdrawn" | "corpus_gap" | "consolidated
 export type Significance = "high" | "medium" | "low" | "administrative";
 export type NodeStatus = "queued" | "running" | "done" | "retried" | "failed";
 
+/** The signed-in person as the UI shows them. Derived from the API user (see lib/roles.ts). */
 export interface Actor {
-  id: "priya" | "rahul";
+  id: string;
   name: string;
+  /** Display label for the role, e.g. "Compliance Officer". */
   role: string;
   initials: string;
 }

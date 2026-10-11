@@ -2,6 +2,7 @@ import { Check, Pencil, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
+import { useSession } from "@/app/auth-context";
 import { QuoteBlock } from "@/components/data-display/quote-block";
 import { LabelTag, StatusTag } from "@/components/data-display/status-tag";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -16,6 +17,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { Sheet } from "@/components/ui/sheet";
 import { useObligations, useUpdateObligation } from "@/hooks/use-rulesight";
 import { COVERAGE, REVIEW_STATUS } from "@/lib/labels";
+import { PERMISSIONS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import type { Obligation } from "@/types/domain";
 
@@ -226,7 +228,9 @@ function Criticality({ value }: { value: 1 | 2 | 3 }) {
 
 function SourcePanel({ obligation }: { obligation: Obligation }) {
   const update = useUpdateObligation();
+  const { can } = useSession();
   const { notify } = useToast();
+  const canEdit = can(PERMISSIONS.editObligations);
   const [editing, setEditing] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [draft, setDraft] = useState({
@@ -364,7 +368,7 @@ function SourcePanel({ obligation }: { obligation: Obligation }) {
         </dl>
       )}
 
-      {!editing ? (
+      {!editing && canEdit ? (
         <div className="action-row">
           <Button
             variant="primary"

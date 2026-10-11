@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useActor } from "@/app/actor-context";
+import { useSession } from "@/app/auth-context";
 import { Button, type ButtonVariant } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Textarea } from "@/components/ui/field";
@@ -26,7 +26,7 @@ export function ReasonDialog({
   onCancel,
   onConfirm,
 }: ReasonDialogProps) {
-  const { actor } = useActor();
+  const { actor } = useSession();
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | undefined>();
   return (

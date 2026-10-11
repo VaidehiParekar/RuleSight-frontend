@@ -40,3 +40,9 @@ export function parseEnv(raw: Record<string, unknown>): AppEnv {
 }
 
 export const env: AppEnv = parseEnv(import.meta.env);
+
+/**
+ * Whether the app serves demo data from src/mocks instead of calling the API. Tests always
+ * use mocks, so they never depend on a running backend.
+ */
+export const mockDataEnabled: boolean = env.VITE_USE_MOCKS || import.meta.env.MODE === "test";

@@ -2,10 +2,11 @@ import { QueryClient } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { RouterProvider } from "react-router";
 
-import { SESSION_KEY } from "@/app/actor-context";
 import { AppProviders } from "@/app/providers";
 import { createTestRouter } from "@/app/router";
-import type { Actor } from "@/types/domain";
+import { MOCK_USERS } from "@/mocks/fixtures";
+import { mockTokenFor } from "@/services/auth-api";
+import { setAuthSession } from "@/services/auth-session";
 
 /** Query client with retries disabled so failure states render immediately in tests. */
 export function createTestQueryClient(): QueryClient {
@@ -15,14 +16,33 @@ export function createTestQueryClient(): QueryClient {
 }
 
 interface RenderOptions {
-  /** Who is signed in. Pass null to start signed out (the sign-in page). */
-  signedInAs?: Actor["id"] | null;
+  /**
+   * Mock user id to start signed in as: "usr-priya" (Compliance Officer, default),
+   * "usr-rahul" (Compliance Analyst), "usr-admin" or "usr-auditor". Pass null to start
+   * signed out (the sign-in page).
+   */
+  signedInAs?: string | null;
+  /**
+   * Start with only the saved token, as after a page reload, so the app validates it with
+   * /auth/me before rendering. By default the user is already known, as after sign-in.
+   */
+  restoreFromToken?: boolean;
 }
 
 /** Renders the full application tree at a given path, using an in-memory router. */
-export function renderAppAt(path: string, { signedInAs = "priya" }: RenderOptions = {}) {
+export function renderAppAt(
+  path: string,
+  { signedInAs = "usr-priya", restoreFromToken = false }: RenderOptions = {},
+) {
   if (signedInAs) {
-    window.localStorage.setItem(SESSION_KEY, signedInAs);
+    const user = MOCK_USERS.find((candidate) => candidate.id === signedInAs);
+    if (!user) {
+      throw new Error(`Unknown mock user: ${signedInAs}`);
+    }
+    setAuthSession({
+      token: mockTokenFor(user.id),
+      user: restoreFromToken ? null : structuredClone(user),
+    });
   }
   const router = createTestRouter(path);
   return render(

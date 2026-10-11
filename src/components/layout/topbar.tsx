@@ -1,12 +1,11 @@
 import { LogOut, Menu, Search } from "lucide-react";
 import { useNavigate } from "react-router";
 
-import { useActor } from "@/app/actor-context";
+import { useAuth, useSession } from "@/app/auth-context";
 import { StatusTag } from "@/components/data-display/status-tag";
-import { ActorSelect } from "@/components/layout/actor-select";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { IconButton } from "@/components/ui/button";
-import { env } from "@/lib/env";
+import { mockDataEnabled } from "@/lib/env";
 
 interface TopbarProps {
   onOpenNavigation: () => void;
@@ -14,7 +13,8 @@ interface TopbarProps {
 }
 
 export function Topbar({ onOpenNavigation, onOpenSearch }: TopbarProps) {
-  const { signOut } = useActor();
+  const { signOut } = useAuth();
+  const { actor, user } = useSession();
   const navigate = useNavigate();
   return (
     <header className="topbar">
@@ -27,7 +27,7 @@ export function Topbar({ onOpenNavigation, onOpenSearch }: TopbarProps) {
         <kbd aria-hidden="true">Ctrl K</kbd>
       </button>
       <div className="topbar-actions">
-        {env.VITE_USE_MOCKS ? (
+        {mockDataEnabled ? (
           <span title="Data comes from src/mocks, built from backend/demo_data. Nothing is sent to the API.">
             <StatusTag tone="warning" outline>
               Mock data
@@ -35,7 +35,15 @@ export function Topbar({ onOpenNavigation, onOpenSearch }: TopbarProps) {
           </span>
         ) : null}
         <ThemeToggle />
-        <ActorSelect />
+        <div className="user-badge" title={user.email}>
+          <span className="avatar" aria-hidden="true">
+            {actor.initials}
+          </span>
+          <span className="actor-copy">
+            <strong>{actor.name}</strong>
+            <small>{actor.role}</small>
+          </span>
+        </div>
         <IconButton
           label="Sign out"
           onClick={() => {

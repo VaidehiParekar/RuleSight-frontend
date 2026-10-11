@@ -1,5 +1,5 @@
+import type { UserResponse } from "@/services/types/api";
 import type {
-  Actor,
   AgentRun,
   Assessment,
   AuditEntry,
@@ -1760,7 +1760,7 @@ export const AUDIT_LOG: AuditEntry[] = [
     id: "au-04",
     at: "2026-10-11T14:20:00+05:30",
     actor: "Rahul Mehta",
-    actor_role: "Analyst",
+    actor_role: "Compliance Analyst",
     action: "Accepted obligation",
     entity_type: "obligation",
     entity_code: "OB-07",
@@ -1772,7 +1772,7 @@ export const AUDIT_LOG: AuditEntry[] = [
     id: "au-05",
     at: "2026-10-11T14:22:00+05:30",
     actor: "Rahul Mehta",
-    actor_role: "Analyst",
+    actor_role: "Compliance Analyst",
     action: "Accepted mapping",
     entity_type: "mapping",
     entity_code: "OB-07 → CTL-05",
@@ -1784,7 +1784,7 @@ export const AUDIT_LOG: AuditEntry[] = [
     id: "au-06",
     at: "2026-10-11T14:25:00+05:30",
     actor: "Rahul Mehta",
-    actor_role: "Analyst",
+    actor_role: "Compliance Analyst",
     action: "Accepted obligation",
     entity_type: "obligation",
     entity_code: "N-07",
@@ -1990,7 +1990,81 @@ export const EVAL_REPORT: EvalReport = {
   ],
 };
 
-export const ACTORS: Actor[] = [
-  { id: "priya", name: "Priya Sharma", role: "Compliance Officer", initials: "PS" },
-  { id: "rahul", name: "Rahul Mehta", role: "Analyst", initials: "RM" },
+const READ_PERMISSIONS = [
+  "documents:read",
+  "obligations:read",
+  "mappings:read",
+  "controls:read",
+  "gaps:read",
+  "remediations:read",
+  "changes:read",
+  "changes:compare",
+  "graph:read",
+  "eval:read",
+  "audit:read",
+];
+const ANALYST_PERMISSIONS = [
+  ...READ_PERMISSIONS,
+  "documents:upload",
+  "obligations:edit",
+  "mappings:verify",
+  "remediations:create",
+];
+const OFFICER_PERMISSIONS = [
+  ...ANALYST_PERMISSIONS,
+  "pipeline:run",
+  "gaps:signoff",
+  "gaps:dismiss",
+  "remediations:approve",
+];
+
+/**
+ * Demo accounts for mock mode. They mirror the users and role permissions seeded by the
+ * backend (alembic 0003_rbac_auth, app/core/auth.py), so the UI behaves the same offline.
+ */
+export const MOCK_USERS: UserResponse[] = [
+  {
+    id: "usr-priya",
+    email: "priya@rulesight.bank",
+    full_name: "Priya Sharma",
+    role: "compliance_officer",
+    initials: "PS",
+    is_active: true,
+    created_at: null,
+    last_login_at: null,
+    permissions: OFFICER_PERMISSIONS,
+  },
+  {
+    id: "usr-rahul",
+    email: "rahul@rulesight.bank",
+    full_name: "Rahul Mehta",
+    role: "compliance_analyst",
+    initials: "RM",
+    is_active: true,
+    created_at: null,
+    last_login_at: null,
+    permissions: ANALYST_PERMISSIONS,
+  },
+  {
+    id: "usr-admin",
+    email: "admin@rulesight.bank",
+    full_name: "System Administrator",
+    role: "admin",
+    initials: "SA",
+    is_active: true,
+    created_at: null,
+    last_login_at: null,
+    permissions: ["users:manage", ...OFFICER_PERMISSIONS],
+  },
+  {
+    id: "usr-auditor",
+    email: "auditor@rbi.gov.in",
+    full_name: "Ananya Sen",
+    role: "auditor",
+    initials: "AS",
+    is_active: true,
+    created_at: null,
+    last_login_at: null,
+    permissions: READ_PERMISSIONS,
+  },
 ];

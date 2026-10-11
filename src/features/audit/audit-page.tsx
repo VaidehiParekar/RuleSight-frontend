@@ -4,19 +4,14 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
-import { FilterGroup } from "@/components/ui/filter-group";
+import { FilterGroup, type FilterOption } from "@/components/ui/filter-group";
 import { SearchField } from "@/components/ui/search-field";
 import { Sheet } from "@/components/ui/sheet";
 import { useAudit } from "@/hooks/use-rulesight";
 import { formatDate, formatTime } from "@/lib/format";
 import type { AuditEntry } from "@/types/domain";
 
-const ACTOR_FILTERS = [
-  { value: "all", label: "Everyone" },
-  { value: "Priya Sharma", label: "Priya Sharma" },
-  { value: "Rahul Mehta", label: "Rahul Mehta" },
-  { value: "Pipeline", label: "Pipeline" },
-] as const;
+const ALL_ACTORS = "all";
 
 const ENTITY_FILTERS = [
   { value: "all", label: "All entities" },
@@ -27,15 +22,25 @@ const ENTITY_FILTERS = [
   { value: "document", label: "Documents" },
 ] as const;
 
-type ActorFilter = (typeof ACTOR_FILTERS)[number]["value"];
+/** Actor names come from the audit entries themselves, since users live in the backend. */
+type ActorFilter = string;
 type EntityFilter = (typeof ENTITY_FILTERS)[number]["value"];
 
 /** Insert-only ledger of every write, with the actor and the before/after values. */
 export function AuditPage() {
   const audit = useAudit();
-  const [actor, setActor] = useState<ActorFilter>("all");
+  const [actor, setActor] = useState<ActorFilter>(ALL_ACTORS);
   const [entity, setEntity] = useState<EntityFilter>("all");
   const [query, setQuery] = useState("");
+  const actorFilters = useMemo<FilterOption<ActorFilter>[]>(() => {
+    const names = [...new Set((audit.data ?? []).map((item) => item.actor))].sort((a, b) =>
+      a.localeCompare(b),
+    );
+    return [
+      { value: ALL_ACTORS, label: "Everyone" },
+      ...names.map((name) => ({ value: name, label: name })),
+    ];
+  }, [audit.data]);
 
   return (
     <PageFrame
@@ -51,7 +56,7 @@ export function AuditPage() {
       <Sheet className="table-sheet">
         <div className="table-toolbar wrap">
           <SearchField value={query} onChange={setQuery} placeholder="Search the audit log" />
-          <FilterGroup label="Actor" value={actor} options={ACTOR_FILTERS} onChange={setActor} />
+          <FilterGroup label="Actor" value={actor} options={actorFilters} onChange={setActor} />
           <FilterGroup
             label="Entity"
             value={entity}
@@ -81,7 +86,7 @@ function AuditTable({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return items.filter((item) => {
-      if (actor !== "all" && item.actor !== actor) return false;
+      if (actor !== ALL_ACTORS && item.actor !== actor) return false;
       if (entity !== "all" && item.entity_type !== entity) return false;
       return `${item.action} ${item.entity_code} ${item.reason ?? ""}`
         .toLowerCase()

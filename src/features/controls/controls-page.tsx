@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
+import { useSession } from "@/app/auth-context";
 import { GraphPath } from "@/components/data-display/graph-path";
 import { QuoteBlock } from "@/components/data-display/quote-block";
 import { LabelTag } from "@/components/data-display/status-tag";
@@ -15,6 +16,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { Tabs } from "@/components/ui/tabs";
 import { useControls, useMappings, useObligations, useUpdateMapping } from "@/hooks/use-rulesight";
 import { COVERAGE, MAPPING_STATUS } from "@/lib/labels";
+import { PERMISSIONS } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import type { Control, Mapping, Obligation } from "@/types/domain";
 
@@ -288,8 +290,10 @@ function ControlDrawer({
   onClose: () => void;
 }) {
   const update = useUpdateMapping();
+  const { can } = useSession();
   const { notify } = useToast();
   if (!control) return null;
+  const canVerify = can(PERMISSIONS.verifyMappings);
   return (
     <Drawer
       eyebrow={`${control.code} · ${control.source_document} ${control.source_section}`}
@@ -346,49 +350,51 @@ function ControlDrawer({
             </p>
             <GraphPath path={mapping.graph_path} critic={mapping.critic} />
             <p className="rationale">{mapping.rationale}</p>
-            <div className="action-row">
-              <Button
-                size="sm"
-                variant="primary"
-                icon={<Check size={14} />}
-                disabled={mapping.status === "accepted" || update.isPending}
-                onClick={() => {
-                  update.mutate(
-                    { id: mapping.id, status: "accepted" },
-                    {
-                      onSuccess: () => {
-                        notify({
-                          title: `Mapping ${obligation?.code ?? ""} → ${control.code} accepted`,
-                        });
+            {canVerify ? (
+              <div className="action-row">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={<Check size={14} />}
+                  disabled={mapping.status === "accepted" || update.isPending}
+                  onClick={() => {
+                    update.mutate(
+                      { id: mapping.id, status: "accepted" },
+                      {
+                        onSuccess: () => {
+                          notify({
+                            title: `Mapping ${obligation?.code ?? ""} → ${control.code} accepted`,
+                          });
+                        },
                       },
-                    },
-                  );
-                }}
-              >
-                Accept
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                icon={<X size={14} />}
-                disabled={mapping.status === "rejected" || update.isPending}
-                onClick={() => {
-                  update.mutate(
-                    { id: mapping.id, status: "rejected" },
-                    {
-                      onSuccess: () => {
-                        notify({
-                          title: `Mapping ${obligation?.code ?? ""} → ${control.code} rejected`,
-                          tone: "neutral",
-                        });
+                    );
+                  }}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon={<X size={14} />}
+                  disabled={mapping.status === "rejected" || update.isPending}
+                  onClick={() => {
+                    update.mutate(
+                      { id: mapping.id, status: "rejected" },
+                      {
+                        onSuccess: () => {
+                          notify({
+                            title: `Mapping ${obligation?.code ?? ""} → ${control.code} rejected`,
+                            tone: "neutral",
+                          });
+                        },
                       },
-                    },
-                  );
-                }}
-              >
-                Reject
-              </Button>
-            </div>
+                    );
+                  }}
+                >
+                  Reject
+                </Button>
+              </div>
+            ) : null}
           </article>
         );
       })}

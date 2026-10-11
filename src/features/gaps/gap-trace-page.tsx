@@ -2,7 +2,7 @@ import { ArrowLeft, Check, EyeOff, FileDiff, Network, Printer, X } from "lucide-
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 
-import { useActor } from "@/app/actor-context";
+import { useSession } from "@/app/auth-context";
 import { EvidenceTable } from "@/components/data-display/evidence-table";
 import { GraphPath } from "@/components/data-display/graph-path";
 import { PriorityChip } from "@/components/data-display/priority-chip";
@@ -24,6 +24,7 @@ import {
   OPERATING,
   REMEDIATION_STATUS,
 } from "@/lib/labels";
+import { PERMISSIONS } from "@/lib/roles";
 import type { GapStatus, GapTrace, Remediation } from "@/types/domain";
 
 const SEVERITY_NOTE: Record<string, string> = {
@@ -309,9 +310,11 @@ function TraceStep({
 
 function VerdictRail({ data }: { data: GapTrace }) {
   const { gap } = data;
-  const { actor } = useActor();
+  const { actor, can } = useSession();
   const { notify } = useToast();
   const updateStatus = useUpdateGapStatus();
+  const canSignOff = can(PERMISSIONS.signOffGaps);
+  const canDismiss = can(PERMISSIONS.dismissGaps);
   const [pendingStatus, setPendingStatus] = useState<GapStatus | null>(null);
   const factors = gap.risk_factors;
 
@@ -364,39 +367,57 @@ function VerdictRail({ data }: { data: GapTrace }) {
         <p>
           <LabelTag value={GAP_STATUS[gap.status]} />
         </p>
-        <div className="verdict-actions">
-          <Button
-            variant="primary"
-            icon={<Check size={15} />}
-            disabled={gap.status === "confirmed" || updateStatus.isPending}
-            onClick={() => {
-              setPendingStatus("confirmed");
-            }}
-          >
-            Confirm gap
-          </Button>
-          <Button
-            disabled={gap.status === "needs_info" || updateStatus.isPending}
-            onClick={() => {
-              setPendingStatus("needs_info");
-            }}
-          >
-            Needs info
-          </Button>
-          <Button
-            variant="danger"
-            icon={<X size={15} />}
-            disabled={gap.status === "dismissed" || updateStatus.isPending}
-            onClick={() => {
-              setPendingStatus("dismissed");
-            }}
-          >
-            Dismiss
-          </Button>
-        </div>
-        <p className="verdict-actor">
-          Acting as <strong>{actor.name}</strong>
-        </p>
+        {canSignOff || canDismiss ? (
+          <>
+            <div className="verdict-actions">
+              {canSignOff ? (
+                <>
+                  <Button
+                    variant="primary"
+                    icon={<Check size={15} />}
+                    disabled={gap.status === "confirmed" || updateStatus.isPending}
+                    onClick={() => {
+                      setPendingStatus("confirmed");
+                    }}
+                  >
+                    Confirm gap
+                  </Button>
+                  <Button
+                    disabled={gap.status === "needs_info" || updateStatus.isPending}
+                    onClick={() => {
+                      setPendingStatus("needs_info");
+                    }}
+                  >
+                    Needs info
+                  </Button>
+                </>
+              ) : null}
+              {canDismiss ? (
+                <Button
+                  variant="danger"
+                  icon={<X size={15} />}
+                  disabled={gap.status === "dismissed" || updateStatus.isPending}
+                  onClick={() => {
+                    setPendingStatus("dismissed");
+                  }}
+                >
+                  Dismiss
+                </Button>
+              ) : null}
+            </div>
+            <p className="verdict-actor">
+              Signed in as <strong>{actor.name}</strong>
+            </p>
+          </>
+        ) : (
+          <p className="verdict-actor">
+            Sign-off needs a Compliance Officer. You are signed in as{" "}
+            <strong>
+              {actor.name}, {actor.role}
+            </strong>
+            .
+          </p>
+        )}
       </div>
       <div className="verdict-block">
         <Link className="button ghost full" to={`/graph?focus=${gap.id}`}>
@@ -430,9 +451,12 @@ function VerdictRail({ data }: { data: GapTrace }) {
 
 function RemediationCard({ remediation, gapCode }: { remediation: Remediation; gapCode: string }) {
   const update = useUpdateRemediation();
+  const { can } = useSession();
   const { notify } = useToast();
   const [rejecting, setRejecting] = useState(false);
   const isDraft = remediation.status === "draft";
+  const canApprove = can(PERMISSIONS.approveRemediations);
+  const canUpdate = can(PERMISSIONS.createRemediations);
 
   return (
     <article className="remediation-card">
@@ -455,7 +479,7 @@ function RemediationCard({ remediation, gapCode }: { remediation: Remediation; g
           <dd>{remediation.closure_evidence}</dd>
         </div>
       </dl>
-      {isDraft ? (
+      {isDraft && canApprove ? (
         <div className="action-row">
           <Button
             variant="primary"
@@ -487,7 +511,7 @@ function RemediationCard({ remediation, gapCode }: { remediation: Remediation; g
             Reject
           </Button>
         </div>
-      ) : remediation.status === "approved" ? (
+      ) : remediation.status === "approved" && canUpdate ? (
         <div className="action-row">
           <Button
             disabled={update.isPending}

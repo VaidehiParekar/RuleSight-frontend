@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { ApiError, apiGet } from "@/services/api-client";
+import { ApiError, apiFetchJson, apiGet, apiPatch, apiUploadForm } from "@/services/api-client";
+import { getAuthToken, onUnauthorized, setAuthSession } from "@/services/auth-session";
 
 const okSchema = z.object({ status: z.literal("ready") });
 
@@ -90,5 +91,122 @@ describe("apiGet", () => {
 
     await expect(pending).rejects.toMatchObject({ code: "request_aborted" });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+function sentHeaders(spy: { mock: { calls: unknown[][] } }): Headers {
+  const init = spy.mock.calls[0]?.[1] as RequestInit | undefined;
+  return new Headers(init?.headers);
+}
+
+describe("error bodies", () => {
+  it("reads FastAPI's plain detail message", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse(
+        { detail: "Invalid email or password." },
+        { status: 401, headers: { "X-Request-ID": "req-9" } },
+      ),
+    );
+
+    await expect(apiFetchJson("/auth/login", { auth: false })).rejects.toMatchObject({
+      status: 401,
+      code: "unauthorized",
+      message: "Invalid email or password.",
+      requestId: "req-9",
+    });
+  });
+
+  it("joins validation detail messages", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse(
+        { detail: [{ msg: "Field required.", loc: ["body", "email"] }] },
+        { status: 422 },
+      ),
+    );
+
+    await expect(apiFetchJson("/auth/login")).rejects.toMatchObject({
+      code: "validation_error",
+      message: "Field required.",
+    });
+  });
+});
+
+describe("authentication", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("sends the bearer token on JSON requests and never sends X-Actor", async () => {
+    setAuthSession({ token: "tok-123", user: null });
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ id: "g-1" }));
+
+    await apiPatch("/gaps/g-1", { status: "confirmed" });
+
+    const headers = sentHeaders(spy);
+    expect(headers.get("Authorization")).toBe("Bearer tok-123");
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.has("X-Actor")).toBe(false);
+  });
+
+  it("sends the bearer token on multipart uploads without forcing a Content-Type", async () => {
+    setAuthSession({ token: "tok-456", user: null });
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ id: "doc-1" }));
+
+    await apiUploadForm("/documents", new FormData());
+
+    const headers = sentHeaders(spy);
+    expect(headers.get("Authorization")).toBe("Bearer tok-456");
+    expect(headers.has("Content-Type")).toBe(false);
+  });
+
+  it("sends the bearer token on validated GETs", async () => {
+    setAuthSession({ token: "tok-789", user: null });
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ status: "ready" }));
+
+    await apiGet("/health/ready", okSchema);
+
+    expect(sentHeaders(spy).get("Authorization")).toBe("Bearer tok-789");
+  });
+
+  it("omits the token when auth is false", async () => {
+    setAuthSession({ token: "tok-123", user: null });
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({}));
+
+    await apiFetchJson("/auth/login", { method: "POST", body: {}, auth: false });
+
+    expect(sentHeaders(spy).has("Authorization")).toBe(false);
+  });
+
+  it("clears the session and notifies listeners on a 401 for an authenticated request", async () => {
+    setAuthSession({ token: "tok-123", user: null });
+    const listener = vi.fn();
+    const unsubscribe = onUnauthorized(listener);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ detail: "Not authenticated" }, { status: 401 }),
+    );
+
+    await expect(apiFetchJson("/gaps")).rejects.toMatchObject({ status: 401 });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(getAuthToken()).toBeNull();
+    unsubscribe();
+  });
+
+  it("keeps the session on a 403, which only means a missing permission", async () => {
+    setAuthSession({ token: "tok-123", user: null });
+    const listener = vi.fn();
+    const unsubscribe = onUnauthorized(listener);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ detail: "Permission denied" }, { status: 403 }),
+    );
+
+    await expect(apiPatch("/gaps/g-1", {})).rejects.toMatchObject({
+      status: 403,
+      code: "forbidden",
+    });
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(getAuthToken()).toBe("tok-123");
+    unsubscribe();
   });
 });

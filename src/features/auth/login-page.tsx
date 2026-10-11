@@ -1,12 +1,23 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  CircleAlert,
+  Eye,
+  EyeOff,
+  FileSearch,
+  GitBranch,
+  Info,
+  LoaderCircle,
+  ShieldCheck,
+} from "lucide-react";
+import { useEffect, useId, useState, type SubmitEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
-import { useActor } from "@/app/actor-context";
+import { useAuth } from "@/app/auth-context";
 import { BrandMark } from "@/components/layout/brand-mark";
-import { cn } from "@/lib/utils";
-import type { Actor } from "@/types/domain";
+import { mockDataEnabled } from "@/lib/env";
+import { describeError } from "@/lib/errors";
+import { MOCK_USERS } from "@/mocks/fixtures";
 
 const HIGHLIGHTS = [
   {
@@ -160,22 +171,26 @@ function HeroBackdrop() {
 }
 
 export function LoginPage() {
-  const { actors, actor, signedIn, signIn } = useActor();
-  const [choice, setChoice] = useState<Actor["id"]>(actor.id);
+  const { status, signIn, signOutReason } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const reduce = useReducedMotion() ?? false;
   const target = targetFrom(location.state);
+  const ids = useId();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Sign in · RuleSight";
   }, []);
 
-  if (signedIn) {
+  if (status === "signed_in") {
     return <Navigate to={target} replace />;
   }
 
-  const chosen = actors.find((candidate) => candidate.id === choice) ?? actor;
   const rise = (delay: number) =>
     reduce
       ? {}
@@ -184,6 +199,28 @@ export function LoginPage() {
           animate: { opacity: 1, y: 0 },
           transition: { duration: 0.5, ease: EASE_OUT, delay },
         };
+
+  const onSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+    if (!email.trim() || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      await signIn(email.trim(), password);
+      void navigate(target, { replace: true });
+    } catch (caught: unknown) {
+      setError(describeError(caught).message);
+      setSubmitting(false);
+    }
+  };
+
+  const errorId = `${ids}-error`;
+  const emailId = `${ids}-email`;
+  const passwordId = `${ids}-password`;
 
   return (
     <div className="login">
@@ -230,6 +267,8 @@ export function LoginPage() {
       <main className="login-panel" id="main-content">
         <motion.form
           className="login-card"
+          noValidate
+          aria-busy={submitting}
           {...(reduce
             ? {}
             : {
@@ -238,65 +277,125 @@ export function LoginPage() {
                 transition: { type: "spring", stiffness: 260, damping: 26, delay: 0.1 },
               })}
           onSubmit={(event) => {
-            event.preventDefault();
-            signIn(choice);
-            void navigate(target, { replace: true });
+            void onSubmit(event);
           }}
         >
           <div className="login-card-head">
             <span className="login-eyebrow">Welcome back</span>
             <h2>Sign in</h2>
             <p className="muted">
-              Choose who you are. Your name is recorded on every review and approval.
+              Use your RuleSight account. Your name is recorded on every review and approval.
             </p>
           </div>
 
-          <fieldset className="role-list">
-            <legend className="sr-only">Role</legend>
-            {actors.map((candidate, index) => {
-              const selected = choice === candidate.id;
-              return (
-                <motion.label
-                  key={candidate.id}
-                  className={cn("role-option", selected && "selected")}
-                  {...rise(0.25 + index * 0.07)}
-                  whileHover={reduce ? undefined : { y: -2 }}
+          {signOutReason === "expired" && !error ? (
+            <div className="notice neutral" role="status">
+              <Info size={16} aria-hidden="true" />
+              <div>
+                <strong>Your session has ended</strong>
+                <span>Sign in again to continue where you left off.</span>
+              </div>
+            </div>
+          ) : null}
+
+          <div role="alert" className="login-alert">
+            {error ? (
+              <div className="notice critical">
+                <CircleAlert size={16} aria-hidden="true" />
+                <div>
+                  <strong>Sign-in failed</strong>
+                  <span id={errorId}>{error}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <motion.div className="login-fields" {...rise(0.25)}>
+            <div className="field">
+              <label htmlFor={emailId}>Email</label>
+              <input
+                id={emailId}
+                className="control login-input"
+                type="email"
+                name="email"
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                value={email}
+                disabled={submitting}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? errorId : undefined}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                }}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor={passwordId}>Password</label>
+              <div className="password-control">
+                <input
+                  id={passwordId}
+                  className="control login-input"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  disabled={submitting}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? errorId : undefined}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-controls={passwordId}
+                  title={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => {
+                    setShowPassword((value) => !value);
+                  }}
                 >
-                  <input
-                    type="radio"
-                    name="actor"
-                    value={candidate.id}
-                    checked={selected}
-                    onChange={() => {
-                      setChoice(candidate.id);
-                    }}
-                  />
-                  <span className="avatar" aria-hidden="true">
-                    {candidate.initials}
-                  </span>
-                  <span className="role-copy">
-                    <strong>{candidate.name}</strong>
-                    <small>{candidate.role}</small>
-                  </span>
-                  {selected ? <Check size={16} className="role-check" aria-hidden="true" /> : null}
-                </motion.label>
-              );
-            })}
-          </fieldset>
+                  {showPassword ? (
+                    <EyeOff size={16} aria-hidden="true" />
+                  ) : (
+                    <Eye size={16} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
 
           <motion.button
             type="submit"
             className="button primary full login-submit"
-            whileHover={reduce ? undefined : { scale: 1.015 }}
-            whileTap={reduce ? undefined : { scale: 0.985 }}
+            disabled={submitting}
+            whileHover={reduce || submitting ? undefined : { scale: 1.015 }}
+            whileTap={reduce || submitting ? undefined : { scale: 0.985 }}
           >
-            Continue as {chosen.name}
-            <ArrowRight size={16} className="login-submit-arrow" aria-hidden="true" />
+            {submitting ? (
+              <>
+                <LoaderCircle size={16} className="spin" aria-hidden="true" />
+                Signing in…
+              </>
+            ) : (
+              <>
+                Sign in
+                <ArrowRight size={16} className="login-submit-arrow" aria-hidden="true" />
+              </>
+            )}
           </motion.button>
 
-          <p className="login-note">
-            Prototype sign-in: there is no password. Authentication is out of scope for this demo.
-          </p>
+          {mockDataEnabled ? (
+            <p className="login-note">
+              Mock data mode: sign in as {MOCK_USERS.map((user) => user.email).join(", ")} with any
+              non-empty password.
+            </p>
+          ) : null}
         </motion.form>
       </main>
     </div>

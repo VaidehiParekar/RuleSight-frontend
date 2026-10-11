@@ -1,7 +1,7 @@
 import { ArrowRight, BarChart3, ChevronRight, Gauge, ListChecks } from "lucide-react";
 import { useNavigate } from "react-router";
 
-import { useActor } from "@/app/actor-context";
+import { useSession } from "@/app/auth-context";
 import { CoverageDonut } from "@/components/charts/coverage-donut";
 import { MetricBarChart } from "@/components/charts/metric-bar-chart";
 import { PriorityStackChart } from "@/components/charts/priority-stack-chart";
@@ -21,17 +21,18 @@ import {
 } from "@/hooks/use-rulesight";
 import { formatDateTime, formatScore } from "@/lib/format";
 import { GAP_TYPE } from "@/lib/labels";
+import { ROLES } from "@/lib/roles";
 import type { DashboardSummary } from "@/types/domain";
 
 /**
- * Overview. Priya (Compliance Officer) gets a decision brief; Rahul (Analyst) gets
- * a review desk. Every figure is computed from the data, never hard-coded.
+ * Overview. Compliance analysts get a review desk; every other role (officer, admin,
+ * auditor) gets the decision brief. Every figure is computed from the data, never hard-coded.
  */
 export function DashboardPage() {
-  const { actor } = useActor();
+  const { user, actor } = useSession();
   const navigate = useNavigate();
   const summary = useDashboardSummary();
-  const isCompliance = actor.id === "priya";
+  const isCompliance = user.role !== ROLES.complianceAnalyst;
   const firstName = actor.name.split(" ")[0] ?? actor.name;
   const lastRun = summary.data ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : "";
 
