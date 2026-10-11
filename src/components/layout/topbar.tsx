@@ -1,20 +1,31 @@
-import { Menu } from "lucide-react";
+import { LogOut, Menu, Search } from "lucide-react";
+import { useNavigate } from "react-router";
 
+import { useActor } from "@/app/actor-context";
 import { StatusTag } from "@/components/data-display/status-tag";
 import { ActorSelect } from "@/components/layout/actor-select";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { IconButton } from "@/components/ui/button";
 import { env } from "@/lib/env";
 
-export function Topbar({ onOpenNavigation }: { onOpenNavigation: () => void }) {
+interface TopbarProps {
+  onOpenNavigation: () => void;
+  onOpenSearch: () => void;
+}
+
+export function Topbar({ onOpenNavigation, onOpenSearch }: TopbarProps) {
+  const { signOut } = useActor();
+  const navigate = useNavigate();
   return (
     <header className="topbar">
       <IconButton label="Open navigation" className="mobile-menu" onClick={onOpenNavigation}>
         <Menu size={19} />
       </IconButton>
-      <span className="context-line">
-        Nova Trust Bank <i aria-hidden="true" /> RBI regulatory corpus
-      </span>
+      <button type="button" className="search-trigger" onClick={onOpenSearch}>
+        <Search size={15} aria-hidden="true" />
+        <span>Search pages, gaps, obligations</span>
+        <kbd aria-hidden="true">Ctrl K</kbd>
+      </button>
       <div className="topbar-actions">
         {env.VITE_USE_MOCKS ? (
           <span title="Data comes from src/mocks, built from backend/demo_data. Nothing is sent to the API.">
@@ -25,6 +36,15 @@ export function Topbar({ onOpenNavigation }: { onOpenNavigation: () => void }) {
         ) : null}
         <ThemeToggle />
         <ActorSelect />
+        <IconButton
+          label="Sign out"
+          onClick={() => {
+            signOut();
+            void navigate("/login", { replace: true });
+          }}
+        >
+          <LogOut size={16} />
+        </IconButton>
       </div>
     </header>
   );

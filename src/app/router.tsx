@@ -1,7 +1,9 @@
 import { createBrowserRouter, createMemoryRouter, type RouteObject } from "react-router";
 
+import { RequireSession } from "@/app/require-session";
 import { AppLayout } from "@/components/layout/app-layout";
 import { AuditPage } from "@/features/audit/audit-page";
+import { LoginPage } from "@/features/auth/login-page";
 import { ChangesPage } from "@/features/changes/changes-page";
 import { ControlsPage } from "@/features/controls/controls-page";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
@@ -15,11 +17,17 @@ import { RemediationPage } from "@/features/remediation/remediation-page";
 import { RunDetailPage } from "@/features/runs/run-detail-page";
 import { RunsPage } from "@/features/runs/runs-page";
 
-/** Route table. Paths match NAV_GROUPS in lib/navigation.ts. */
+/** Route table. Paths match NAV_GROUPS in lib/navigation.ts. Everything except /login
+ * needs a session. */
 export const appRoutes: RouteObject[] = [
+  { path: "/login", element: <LoginPage /> },
   {
     path: "/",
-    element: <AppLayout />,
+    element: (
+      <RequireSession>
+        <AppLayout />
+      </RequireSession>
+    ),
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "documents", element: <DocumentsPage /> },

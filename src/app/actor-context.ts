@@ -6,7 +6,14 @@ export interface ActorContextValue {
   actor: Actor;
   actors: readonly Actor[];
   setActorId: (id: Actor["id"]) => void;
+  /** True once the user has chosen who they are on the sign-in page. */
+  signedIn: boolean;
+  signIn: (id: Actor["id"]) => void;
+  signOut: () => void;
 }
+
+/** localStorage key that marks a signed-in session. Holds the actor id. */
+export const SESSION_KEY = "rulesight-session";
 
 export const ActorContext = createContext<ActorContextValue | null>(null);
 

@@ -6,18 +6,13 @@ export interface Kpi {
   note: ReactNode;
 }
 
-/** Ruled row of key figures. Folio numbers echo a printed report. */
+/** Row of key-figure cards: label, big number, one line of context. */
 export function KpiStrip({ items, label }: { items: Kpi[]; label: string }) {
   return (
     <section className="kpi-strip" aria-label={label}>
-      {items.map((item, index) => (
+      {items.map((item) => (
         <div className="kpi" key={item.label}>
-          <div className="kpi-top">
-            <span className="eyebrow">{item.label}</span>
-            <span className="folio" aria-hidden="true">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-          </div>
+          <span className="kpi-label">{item.label}</span>
           <strong>{item.value}</strong>
           <span>{item.note}</span>
         </div>
