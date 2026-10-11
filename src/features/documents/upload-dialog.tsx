@@ -1,16 +1,19 @@
-import { Upload } from "lucide-react";
-import { useState, type SyntheticEvent } from "react";
+import { useState, type DragEvent, type SyntheticEvent } from "react";
 
+import { useActor } from "@/app/actor-context";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Field, Input } from "@/components/ui/field";
+import { Listbox } from "@/components/ui/listbox";
 import { useUploadDocument } from "@/hooks/use-rulesight";
 import { describeError } from "@/lib/errors";
 import { DOC_TYPE } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import type { DocType, SourceDocument } from "@/types/domain";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [".pdf", ".md", ".txt", ".csv"];
+const REGULATORS = ["RBI", "SEBI", "FIU-IND"].map((value) => ({ value, label: value }));
 
 interface UploadDialogProps {
   documents: SourceDocument[];
@@ -19,14 +22,27 @@ interface UploadDialogProps {
 }
 
 interface FormErrors {
-  file?: string;
-  title?: string;
+  file?: string | undefined;
+  title?: string | undefined;
+  version?: string | undefined;
+}
+
+function fileProblem(file: File): string | undefined {
+  if (!ALLOWED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext))) {
+    return "Use a PDF, Markdown, text or CSV file.";
+  }
+  if (file.size > MAX_BYTES) {
+    return `This file is ${(file.size / 1048576).toFixed(1)} MB. The limit is 10 MB.`;
+  }
+  return undefined;
 }
 
 /** Validates type and size in the browser; the API validates again and dedupes by SHA-256. */
 export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogProps) {
+  const { actor } = useActor();
   const upload = useUploadDocument();
   const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [docType, setDocType] = useState<DocType>("regulation");
   const [title, setTitle] = useState("");
   const [regulator, setRegulator] = useState("RBI");
@@ -38,30 +54,33 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
     (doc) => doc.doc_type === docType && doc.status !== "superseded",
   );
 
+  const pickFile = (next: File | undefined) => {
+    setDragging(false);
+    if (!next) return;
+    setFile(next);
+    setErrors((current) => ({ ...current, file: fileProblem(next) }));
+    if (!title.trim()) {
+      setTitle(next.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "));
+    }
+  };
+
   const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const nextErrors: FormErrors = {};
-    if (!file) {
-      nextErrors.file = "Choose a file to upload.";
-    } else if (!ALLOWED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext))) {
-      nextErrors.file = "Only PDF, Markdown, text and CSV files are accepted.";
-    } else if (file.size > MAX_BYTES) {
-      nextErrors.file = "The file is larger than 10 MB.";
-    }
-    if (!title.trim()) {
-      nextErrors.title = "Enter the official document title.";
-    }
+    const nextErrors: FormErrors = {
+      file: file ? fileProblem(file) : "Choose a file to upload.",
+      title: title.trim() ? undefined : "Enter a title.",
+      version: version.trim() ? undefined : "Enter a version label, for example v2 · 2 Oct 2026.",
+    };
     setErrors(nextErrors);
-    if (!file || Object.keys(nextErrors).length > 0) return;
+    if (!file || nextErrors.file || nextErrors.title || nextErrors.version) return;
 
     upload.mutate(
       {
-        file,
         file_name: file.name,
         file_size: file.size,
         doc_type: docType,
         title: title.trim(),
-        regulator: docType === "regulation" ? regulator.trim() || null : null,
+        regulator: docType === "regulation" ? regulator : null,
         version_label: version.trim(),
         supersedes_id: supersedes || null,
       },
@@ -69,126 +88,149 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
     );
   };
 
+  const onDrag = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    if (!dragging) setDragging(true);
+  };
+
   return (
     <Dialog
-      eyebrow="Add to corpus"
       title="Upload document"
       onClose={onClose}
+      onSubmit={submit}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" type="submit" form="upload-form" disabled={upload.isPending}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" type="submit" disabled={upload.isPending}>
             {upload.isPending ? "Uploading…" : "Upload and process"}
           </Button>
         </>
       }
     >
-      <form id="upload-form" noValidate onSubmit={submit}>
-        <label className={errors.file ? "dropzone invalid" : "dropzone"}>
-          <Upload size={22} aria-hidden="true" />
-          <strong>Drop a PDF, Markdown, text or CSV file</strong>
-          <span>or choose a file · 10 MB maximum</span>
-          <input
-            type="file"
-            accept={ALLOWED_EXTENSIONS.join(",")}
-            aria-label="Document file"
+      <label
+        className={cn("dropzone", dragging && "dragging", errors.file && "invalid")}
+        onDragOver={onDrag}
+        onDragLeave={() => {
+          setDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          pickFile(event.dataTransfer.files[0]);
+        }}
+      >
+        <input
+          type="file"
+          accept={ALLOWED_EXTENSIONS.join(",")}
+          aria-label="Document file"
+          onChange={(event) => {
+            pickFile(event.target.files?.[0]);
+          }}
+        />
+        <strong>{file ? file.name : "Drop a PDF, Markdown, text or CSV file"}</strong>
+        <span>
+          {file
+            ? `${(file.size / 1048576).toFixed(2)} MB · choose another file to replace it`
+            : "or click to choose from your computer · 10 MB limit"}
+        </span>
+      </label>
+      {errors.file ? (
+        <p className="field-message error" role="alert">
+          ✕ {errors.file}
+        </p>
+      ) : null}
+
+      <div className="field">
+        <span className="field-label" id="doc-type-label">
+          Document type
+        </span>
+        <div className="segmented fill" role="radiogroup" aria-labelledby="doc-type-label">
+          {(Object.keys(DOC_TYPE) as DocType[]).map((type) => (
+            <button
+              key={type}
+              type="button"
+              role="radio"
+              aria-checked={docType === type}
+              onClick={() => {
+                setDocType(type);
+                setSupersedes("");
+              }}
+            >
+              {DOC_TYPE[type]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Field label="Title" error={errors.title} full>
+        {(props) => (
+          <Input
+            {...props}
+            value={title}
+            placeholder="Master Direction – Note Sorting Machines, 2026"
             onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
+              setTitle(event.target.value);
+              if (errors.title) setErrors({ ...errors, title: undefined });
             }}
           />
-          {file ? <em>{file.name}</em> : null}
-        </label>
-        {errors.file ? (
-          <p className="field-message error" role="alert">
-            {errors.file}
-          </p>
-        ) : null}
+        )}
+      </Field>
 
-        <div className="form-grid">
-          <Field label="Document type">
+      <div className="form-grid">
+        {docType === "regulation" ? (
+          <Field label="Regulator">
             {(props) => (
-              <Select
-                {...props}
-                value={docType}
-                onChange={(event) => {
-                  setDocType(event.target.value as DocType);
-                  setSupersedes("");
-                }}
-              >
-                {(Object.keys(DOC_TYPE) as DocType[]).map((type) => (
-                  <option key={type} value={type}>
-                    {DOC_TYPE[type]}
-                  </option>
-                ))}
-              </Select>
+              <Listbox {...props} options={REGULATORS} value={regulator} onChange={setRegulator} />
             )}
           </Field>
-          <Field
-            label="Regulator"
-            hint={docType === "regulation" ? undefined : "Only used for regulations"}
-          >
-            {(props) => (
-              <Input
-                {...props}
-                value={regulator}
-                disabled={docType !== "regulation"}
-                onChange={(event) => {
-                  setRegulator(event.target.value);
-                }}
-              />
-            )}
-          </Field>
-          <Field label="Title" error={errors.title} full>
-            {(props) => (
-              <Input
-                {...props}
-                value={title}
-                placeholder="Official document title"
-                onChange={(event) => {
-                  setTitle(event.target.value);
-                }}
-              />
-            )}
-          </Field>
-          <Field label="Version label">
-            {(props) => (
-              <Input
-                {...props}
-                value={version}
-                placeholder="e.g. v2 · 2 Oct 2026"
-                onChange={(event) => {
-                  setVersion(event.target.value);
-                }}
-              />
-            )}
-          </Field>
-          <Field label="Supersedes" hint="Triggers change and impact analysis">
-            {(props) => (
-              <Select
-                {...props}
-                value={supersedes}
-                onChange={(event) => {
-                  setSupersedes(event.target.value);
-                }}
-              >
-                <option value="">Does not supersede</option>
-                {candidates.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.title} · {doc.version_label}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-        </div>
-        {upload.isError ? (
-          <p className="field-message error" role="alert">
-            {describeError(upload.error).message}
-          </p>
         ) : null}
-      </form>
+        <Field label="Version label" error={errors.version}>
+          {(props) => (
+            <Input
+              {...props}
+              value={version}
+              placeholder="v2 · 2 Oct 2026"
+              onChange={(event) => {
+                setVersion(event.target.value);
+                if (errors.version) setErrors({ ...errors, version: undefined });
+              }}
+            />
+          )}
+        </Field>
+      </div>
+
+      <Field
+        label="Supersedes"
+        hint="Choosing a document here runs the change comparison after extraction."
+        full
+      >
+        {(props) => (
+          <Listbox
+            {...props}
+            value={supersedes}
+            onChange={setSupersedes}
+            options={[
+              { value: "", label: "None" },
+              ...candidates.map((doc) => ({
+                value: doc.id,
+                label: `${doc.title} · ${doc.version_label}`,
+              })),
+            ]}
+          />
+        )}
+      </Field>
+
+      <p className="recorded-as">
+        Uploaded as{" "}
+        <strong>
+          {actor.name}, {actor.role}
+        </strong>
+        . The pipeline starts once the file is stored.
+      </p>
+      {upload.isError ? (
+        <p className="field-message error" role="alert">
+          {describeError(upload.error).message}
+        </p>
+      ) : null}
     </Dialog>
   );
 }

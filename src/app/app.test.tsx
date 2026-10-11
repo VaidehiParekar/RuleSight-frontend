@@ -11,7 +11,7 @@ describe("application shell", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: "Compliance overview" }),
     ).toBeInTheDocument();
-    const nav = screen.getByRole("navigation", { name: "Primary" });
+    const nav = screen.getByRole("navigation", { name: "Main" });
     expect(within(nav).getByRole("link", { name: /Documents/ })).toHaveAttribute(
       "href",
       "/documents",
@@ -26,10 +26,13 @@ describe("application shell", () => {
   it("computes the compliance KPIs from the demo data", async () => {
     renderAppAt("/");
 
-    const kpis = await screen.findByRole("region", { name: "Key metrics" });
-    expect(within(kpis).getByText("Open P1 gaps").closest(".kpi")).toHaveTextContent("3");
-    expect(within(kpis).getByText("12 open gaps in total")).toBeInTheDocument();
-    expect(within(kpis).getByText("Remediation").closest(".kpi")).toHaveTextContent("3 / 12");
+    const kpis = await screen.findByRole("region", { name: "Key figures" });
+    const open = within(kpis).getByText("Open gaps").closest(".kpi");
+    expect(open).toHaveTextContent("12");
+    expect(open).toHaveTextContent("P1 3");
+    const remediation = within(kpis).getByText("Remediation").closest(".kpi");
+    expect(remediation).toHaveTextContent("3 approved");
+    expect(remediation).toHaveTextContent("of 12 drafted by agent");
   });
 
   it("switches the dashboard and the audit identity when acting as the analyst", async () => {
@@ -37,29 +40,36 @@ describe("application shell", () => {
     renderAppAt("/");
     await screen.findByRole("heading", { name: "Compliance overview" });
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Acting as" }), "rahul");
+    await user.click(screen.getByRole("button", { name: /Acting as Priya Sharma/ }));
+    await user.click(
+      within(screen.getByRole("listbox", { name: "Acting as" })).getByRole("option", {
+        name: /Rahul Mehta/,
+      }),
+    );
 
-    expect(
-      await screen.findByRole("heading", { name: "Analyst review queue" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Review overview" })).toBeInTheDocument();
     expect(screen.getByText("Now acting as Rahul Mehta")).toBeInTheDocument();
     expect(window.localStorage.getItem("rulesight-actor")).toBe("rahul");
   });
 
-  it("toggles the dark theme and remembers the choice", async () => {
+  it("switches to the dark theme and remembers the choice", async () => {
     const user = userEvent.setup();
     renderAppAt("/");
 
-    await user.click(await screen.findByRole("button", { name: "Switch to dark theme" }));
+    const theme = await screen.findByRole("radiogroup", { name: "Theme" });
+    await user.click(within(theme).getByRole("radio", { name: "Dark" }));
 
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
     expect(window.localStorage.getItem("rulesight-theme")).toBe("dark");
-    expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeInTheDocument();
+    expect(within(theme).getByRole("radio", { name: "Dark" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
   });
 
   it("labels mock data so it is never mistaken for live results", async () => {
     renderAppAt("/");
-    expect(await screen.findByText("Mock data")).toBeInTheDocument();
+    expect(await screen.findByText("Demo fixtures")).toBeInTheDocument();
   });
 
   it("renders a not-found page for unknown paths", async () => {

@@ -31,7 +31,6 @@ export function ControlsPage() {
 
   return (
     <PageFrame
-      eyebrow="Control framework · Nova Trust RCM and policies"
       title="Controls"
       subtitle="The bank's controls and how each RBI obligation maps to them. Mappings show the graph path and critic result, never a confidence score."
     >

@@ -6,12 +6,13 @@ export function EvidenceTable({ evidence }: { evidence: Evidence }) {
     evidence.flagged_cells.map(([row, col]) => `${String(row)}:${String(col)}`),
   );
   return (
-    <div className="evidence">
-      <div className="evidence-head">
+    <div className="evidence-block">
+      <header className="evidence-head">
         <span className="mono">{evidence.code}</span>
         <strong>{evidence.title}</strong>
-      </div>
-      <div className="table-scroll">
+      </header>
+      <div className="evidence table-scroll">
+        <p className="evidence-file mono">{evidence.file_name}</p>
         <table className="data-table compact">
           <caption className="sr-only">{evidence.title}</caption>
           <thead>
@@ -43,9 +44,7 @@ export function EvidenceTable({ evidence }: { evidence: Evidence }) {
           </tbody>
         </table>
       </div>
-      <p className="evidence-summary">
-        {evidence.summary} <span className="mono">{evidence.file_name}</span>
-      </p>
+      <p className="evidence-summary">{evidence.summary}</p>
     </div>
   );
 }

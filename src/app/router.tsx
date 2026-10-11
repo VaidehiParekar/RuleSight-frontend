@@ -2,9 +2,6 @@ import { createBrowserRouter, createMemoryRouter, type RouteObject } from "react
 
 import { RequireSession } from "@/app/require-session";
 import { AppLayout } from "@/components/layout/app-layout";
-import { PageFrame } from "@/components/layout/page-frame";
-import { ErrorState } from "@/components/feedback/error-state";
-import { useRouteError } from "react-router";
 import { AuditPage } from "@/features/audit/audit-page";
 import { LoginPage } from "@/features/auth/login-page";
 import { ChangesPage } from "@/features/changes/changes-page";

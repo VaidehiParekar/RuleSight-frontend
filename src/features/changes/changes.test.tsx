@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -18,15 +18,18 @@ describe("Changes", () => {
     const user = userEvent.setup();
     renderAppAt("/changes");
 
-    await user.click(await screen.findByRole("button", { name: /Show the 6 requirements/ }));
-    expect(screen.getAllByText(/carried over from DCM\(NPD\) No.S488/)).toHaveLength(6);
-    expect(screen.getByText("Carried over", { selector: ".status" })).toBeInTheDocument();
+    const toggle = await screen.findByRole("button", { name: /Show the 6 requirements/ });
+    expect(toggle).toHaveTextContent("DCM(NPD) No.S488");
+    await user.click(toggle);
+    const list = toggle.parentElement?.querySelector(".carried-list") as HTMLElement;
+    expect(within(list).getAllByText("Carried over")).toHaveLength(6);
+    expect(screen.getByText("Consolidated", { selector: ".status" })).toBeInTheDocument();
     expect(screen.queryByText(/^New$/i, { selector: ".status" })).not.toBeInTheDocument();
   });
 
   it("links the modified requirement to the new P1 gap", async () => {
     renderAppAt("/changes");
-    expect(await screen.findByRole("link", { name: "NG-03 · new gap" })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "NG-03 · P1" })).toHaveAttribute(
       "href",
       "/gaps/ng-03",
     );

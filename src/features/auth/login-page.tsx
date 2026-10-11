@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
 import { useActor } from "@/app/actor-context";
-import { BrandMark } from "@/components/layout/brand-mark";
+import { BrandLockup } from "@/components/layout/brand-mark";
 import { cn } from "@/lib/utils";
 import type { Actor } from "@/types/domain";
 
@@ -190,8 +190,7 @@ export function LoginPage() {
       <aside className="login-hero">
         <HeroBackdrop />
         <motion.div className="login-brand" {...rise(0.05)}>
-          <BrandMark />
-          <span>RuleSight</span>
+          <BrandLockup />
         </motion.div>
 
         <div className="login-hero-copy">
