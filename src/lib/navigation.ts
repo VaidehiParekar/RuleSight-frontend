@@ -45,7 +45,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: "System",
     items: [
-      { label: "Graph", path: "/graph", icon: Network },
+      { label: "Knowledge graph", path: "/graph", icon: Network },
       { label: "Agent runs", path: "/runs", icon: Activity },
       { label: "Audit log", path: "/audit", icon: ListChecks },
     ],
