@@ -2,7 +2,7 @@ import { NavLink } from "react-router";
 
 import { BrandLockup } from "@/components/layout/brand-mark";
 import { useDocuments, useGaps } from "@/hooks/use-rulesight";
-import { env } from "@/lib/env";
+import { mockDataEnabled } from "@/lib/env";
 import { NAV_GROUPS } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
         <span className="mono">
           RBI corpus{regulations === undefined ? "" : ` · ${String(regulations)} documents`}
         </span>
-        {env.VITE_USE_MOCKS ? (
+        {mockDataEnabled ? (
           <span
             className="fixtures"
             title="Screens are running on demo fixtures, not the live backend"
