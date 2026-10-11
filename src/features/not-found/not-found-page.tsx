@@ -6,11 +6,7 @@ import { Sheet } from "@/components/ui/sheet";
 
 export function NotFoundPage() {
   return (
-    <PageFrame
-      eyebrow="RuleSight"
-      title="Page not found"
-      subtitle="The address does not match any screen."
-    >
+    <PageFrame title="Page not found" subtitle="The address does not match any screen.">
       <Sheet>
         <EmptyState
           title="There is nothing at this address."

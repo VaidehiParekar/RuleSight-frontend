@@ -1,10 +1,13 @@
 import { StatusTag } from "@/components/data-display/status-tag";
 import type { CriticResult } from "@/types/domain";
 
-const CRITIC: Record<CriticResult, { label: string; tone: "success" | "warning" | "critical" }> = {
-  passed: { label: "Critic passed", tone: "success" },
-  retried: { label: "Critic passed on retry", tone: "warning" },
-  failed: { label: "Critic failed", tone: "critical" },
+const CRITIC: Record<
+  CriticResult,
+  { label: string; icon: string; tone: "success" | "warning" | "critical" }
+> = {
+  passed: { label: "Critic passed", icon: "✓", tone: "success" },
+  retried: { label: "Critic passed on retry", icon: "↻", tone: "warning" },
+  failed: { label: "Critic failed", icon: "✕", tone: "critical" },
 };
 
 /**
@@ -14,6 +17,7 @@ const CRITIC: Record<CriticResult, { label: string; tone: "success" | "warning" 
 export function GraphPath({ path, critic }: { path: string[]; critic: CriticResult }) {
   return (
     <div className="graph-path">
+      <span className="eyebrow">Path</span>
       <ol aria-label="Knowledge graph path">
         {path.map((step, index) => (
           <li
@@ -24,7 +28,9 @@ export function GraphPath({ path, critic }: { path: string[]; critic: CriticResu
           </li>
         ))}
       </ol>
-      <StatusTag tone={CRITIC[critic].tone}>{CRITIC[critic].label}</StatusTag>
+      <StatusTag tone={CRITIC[critic].tone} icon={CRITIC[critic].icon}>
+        {CRITIC[critic].label}
+      </StatusTag>
     </div>
   );
 }

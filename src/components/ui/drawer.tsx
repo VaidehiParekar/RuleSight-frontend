@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { IconButton } from "@/components/ui/button";
 
@@ -33,7 +34,9 @@ export function Drawer({ eyebrow, title, onClose, children }: DrawerProps) {
     };
   }, []);
 
-  return (
+  // Portalled to <body>: an animated page container would otherwise become the
+  // reference for this fixed overlay and clip it.
+  return createPortal(
     <div className="drawer-backdrop" role="presentation" onMouseDown={onClose}>
       <aside
         ref={panelRef}
@@ -57,6 +60,7 @@ export function Drawer({ eyebrow, title, onClose, children }: DrawerProps) {
         </div>
         <div className="drawer-body">{children}</div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }

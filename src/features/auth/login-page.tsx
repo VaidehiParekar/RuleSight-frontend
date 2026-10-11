@@ -1,20 +1,11 @@
 import { motion, useReducedMotion } from "framer-motion";
-import {
-  ArrowRight,
-  CircleAlert,
-  Eye,
-  EyeOff,
-  FileSearch,
-  GitBranch,
-  Info,
-  LoaderCircle,
-  ShieldCheck,
-} from "lucide-react";
-import { useEffect, useId, useState, type SubmitEvent } from "react";
+import { ArrowRight, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
 import { useAuth } from "@/app/auth-context";
-import { BrandMark } from "@/components/layout/brand-mark";
+import { BrandLockup } from "@/components/layout/brand-mark";
+import { Field, Input } from "@/components/ui/field";
 import { mockDataEnabled } from "@/lib/env";
 import { describeError } from "@/lib/errors";
 import { MOCK_USERS } from "@/mocks/fixtures";
@@ -171,17 +162,15 @@ function HeroBackdrop() {
 }
 
 export function LoginPage() {
-  const { status, signIn, signOutReason } = useAuth();
+  const { status, signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const reduce = useReducedMotion() ?? false;
   const target = targetFrom(location.state);
-  const ids = useId();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Sign in · RuleSight";
@@ -200,35 +189,27 @@ export function LoginPage() {
           transition: { duration: 0.5, ease: EASE_OUT, delay },
         };
 
-  const onSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
+  const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (submitting) return;
-    if (!email.trim() || !password) {
-      setError("Enter your email and password.");
-      return;
-    }
+    setPending(true);
     setError(null);
-    setSubmitting(true);
-    try {
-      await signIn(email.trim(), password);
-      void navigate(target, { replace: true });
-    } catch (caught: unknown) {
-      setError(describeError(caught).message);
-      setSubmitting(false);
-    }
+    signIn(email.trim(), password).then(
+      () => {
+        void navigate(target, { replace: true });
+      },
+      (caught: unknown) => {
+        setError(describeError(caught).message);
+        setPending(false);
+      },
+    );
   };
-
-  const errorId = `${ids}-error`;
-  const emailId = `${ids}-email`;
-  const passwordId = `${ids}-password`;
 
   return (
     <div className="login">
       <aside className="login-hero">
         <HeroBackdrop />
         <motion.div className="login-brand" {...rise(0.05)}>
-          <BrandMark />
-          <span>RuleSight</span>
+          <BrandLockup />
         </motion.div>
 
         <div className="login-hero-copy">
@@ -268,7 +249,6 @@ export function LoginPage() {
         <motion.form
           className="login-card"
           noValidate
-          aria-busy={submitting}
           {...(reduce
             ? {}
             : {
@@ -276,125 +256,81 @@ export function LoginPage() {
                 animate: { opacity: 1, y: 0, scale: 1 },
                 transition: { type: "spring", stiffness: 260, damping: 26, delay: 0.1 },
               })}
-          onSubmit={(event) => {
-            void onSubmit(event);
-          }}
+          onSubmit={submit}
         >
           <div className="login-card-head">
             <span className="login-eyebrow">Welcome back</span>
             <h2>Sign in</h2>
-            <p className="muted">
-              Use your RuleSight account. Your name is recorded on every review and approval.
-            </p>
+            <p className="muted">Your name is recorded on every review and approval.</p>
           </div>
 
-          {signOutReason === "expired" && !error ? (
-            <div className="notice neutral" role="status">
-              <Info size={16} aria-hidden="true" />
-              <div>
-                <strong>Your session has ended</strong>
-                <span>Sign in again to continue where you left off.</span>
-              </div>
-            </div>
-          ) : null}
-
-          <div role="alert" className="login-alert">
-            {error ? (
-              <div className="notice critical">
-                <CircleAlert size={16} aria-hidden="true" />
-                <div>
-                  <strong>Sign-in failed</strong>
-                  <span id={errorId}>{error}</span>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <motion.div className="login-fields" {...rise(0.25)}>
-            <div className="field">
-              <label htmlFor={emailId}>Email</label>
-              <input
-                id={emailId}
-                className="control login-input"
+          <Field label="Email">
+            {(props) => (
+              <Input
+                {...props}
                 type="email"
-                name="email"
-                inputMode="email"
                 autoComplete="username"
-                autoCapitalize="none"
-                spellCheck={false}
-                required
                 value={email}
-                disabled={submitting}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? errorId : undefined}
+                disabled={pending}
                 onChange={(event) => {
                   setEmail(event.target.value);
                 }}
               />
-            </div>
-            <div className="field">
-              <label htmlFor={passwordId}>Password</label>
-              <div className="password-control">
-                <input
-                  id={passwordId}
-                  className="control login-input"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  disabled={submitting}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : undefined}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-controls={passwordId}
-                  title={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => {
-                    setShowPassword((value) => !value);
-                  }}
-                >
-                  {showPassword ? (
-                    <EyeOff size={16} aria-hidden="true" />
-                  ) : (
-                    <Eye size={16} aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </motion.div>
+            )}
+          </Field>
+
+          <Field label="Password">
+            {(props) => (
+              <Input
+                {...props}
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                disabled={pending}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                }}
+              />
+            )}
+          </Field>
+
+          {error ? (
+            <p className="field-message error" role="alert">
+              {error}
+            </p>
+          ) : null}
 
           <motion.button
             type="submit"
             className="button primary full login-submit"
-            disabled={submitting}
-            whileHover={reduce || submitting ? undefined : { scale: 1.015 }}
-            whileTap={reduce || submitting ? undefined : { scale: 0.985 }}
+            disabled={pending || email.trim() === "" || password === ""}
+            whileHover={reduce ? undefined : { scale: 1.015 }}
+            whileTap={reduce ? undefined : { scale: 0.985 }}
           >
-            {submitting ? (
-              <>
-                <LoaderCircle size={16} className="spin" aria-hidden="true" />
-                Signing in…
-              </>
-            ) : (
-              <>
-                Sign in
-                <ArrowRight size={16} className="login-submit-arrow" aria-hidden="true" />
-              </>
-            )}
+            {pending ? "Signing in…" : "Sign in"}
+            <ArrowRight size={16} className="login-submit-arrow" aria-hidden="true" />
           </motion.button>
 
           {mockDataEnabled ? (
-            <p className="login-note">
-              Mock data mode: sign in as {MOCK_USERS.map((user) => user.email).join(", ")} with any
-              non-empty password.
-            </p>
+            <div className="login-note">
+              <p>Demo mode: any password works. Use one of these accounts:</p>
+              <ul className="demo-accounts">
+                {MOCK_USERS.map((user) => (
+                  <li key={user.id}>
+                    <button
+                      type="button"
+                      className="link-button mono"
+                      onClick={() => {
+                        setEmail(user.email);
+                      }}
+                    >
+                      {user.email}
+                    </button>{" "}
+                    <span className="muted">{user.full_name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
         </motion.form>
       </main>

@@ -8,7 +8,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { runTotals } from "@/features/runs/run-totals";
 import { useReadiness } from "@/hooks/use-readiness";
 import { useRuns } from "@/hooks/use-rulesight";
-import { env } from "@/lib/env";
+import { mockDataEnabled } from "@/lib/env";
 import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
 
 /** Observability: every pipeline run and its agent nodes (agent_runs table). */
@@ -17,11 +17,10 @@ export function RunsPage() {
   const navigate = useNavigate();
   return (
     <PageFrame
-      eyebrow="Observability · agent_runs"
       title="Agent runs"
       subtitle="Each pipeline run, its nodes, LLM calls and tokens. Cached calls make reruns deterministic."
     >
-      {env.VITE_USE_MOCKS ? null : <ApiStatus />}
+      {mockDataEnabled ? null : <ApiStatus />}
       <Sheet className="table-sheet">
         <QueryView query={runs} what="pipeline runs" rows={4}>
           {(items) => (

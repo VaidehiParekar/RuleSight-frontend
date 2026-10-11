@@ -1,22 +1,31 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type SubmitEventHandler,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import { createPortal } from "react-dom";
 
 import { IconButton } from "@/components/ui/button";
 
 interface DialogProps {
-  eyebrow: string;
   title: string;
   onClose: () => void;
   children: ReactNode;
   footer: ReactNode;
   size?: "md" | "sm";
+  /** When set, the panel is a <form> and the footer's submit button submits it. */
+  onSubmit?: SubmitEventHandler<HTMLFormElement>;
 }
 
 /**
  * Modal dialog. Escape and the backdrop close it; focus moves into the dialog on
  * open and returns to the triggering element on close.
  */
-export function Dialog({ eyebrow, title, onClose, children, footer, size = "md" }: DialogProps) {
+export function Dialog({ title, onClose, children, footer, size = "md", onSubmit }: DialogProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef(onClose);
@@ -28,7 +37,7 @@ export function Dialog({ eyebrow, title, onClose, children, footer, size = "md" 
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const firstField = panelRef.current?.querySelector<HTMLElement>(
-      "input, select, textarea, button:not(.icon-button)",
+      "input:not([type=file]), textarea, [role=radio][aria-checked=true], button:not(.icon-button)",
     );
     (firstField ?? panelRef.current)?.focus();
     const onKey = (event: KeyboardEvent) => {
@@ -41,31 +50,49 @@ export function Dialog({ eyebrow, title, onClose, children, footer, size = "md" 
     };
   }, []);
 
-  return (
+  const content = (
+    <>
+      <div className="dialog-head">
+        <h2 id={titleId}>{title}</h2>
+        <IconButton label="Close dialog" onClick={onClose}>
+          <X size={18} />
+        </IconButton>
+      </div>
+      <div className="dialog-body">{children}</div>
+      <div className="dialog-foot">{footer}</div>
+    </>
+  );
+
+  const shared = {
+    className: size === "sm" ? "dialog small" : "dialog",
+    role: "dialog",
+    "aria-modal": true,
+    "aria-labelledby": titleId,
+    tabIndex: -1,
+    onMouseDown: (event: { stopPropagation: () => void }) => {
+      event.stopPropagation();
+    },
+  } as const;
+
+  // Portalled to <body>: an animated page container would otherwise become the
+  // reference for this fixed overlay and clip it.
+  return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section
-        ref={panelRef}
-        className={size === "sm" ? "dialog small" : "dialog"}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        onMouseDown={(event) => {
-          event.stopPropagation();
-        }}
-      >
-        <div className="dialog-head">
-          <div>
-            <span className="eyebrow">{eyebrow}</span>
-            <h2 id={titleId}>{title}</h2>
-          </div>
-          <IconButton label="Close dialog" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </div>
-        <div className="dialog-body">{children}</div>
-        <div className="dialog-foot">{footer}</div>
-      </section>
-    </div>
+      {onSubmit ? (
+        <form
+          ref={panelRef as RefObject<HTMLFormElement>}
+          noValidate
+          onSubmit={onSubmit}
+          {...shared}
+        >
+          {content}
+        </form>
+      ) : (
+        <section ref={panelRef} {...shared}>
+          {content}
+        </section>
+      )}
+    </div>,
+    document.body,
   );
 }

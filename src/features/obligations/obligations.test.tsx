@@ -8,8 +8,9 @@ describe("Obligations review", () => {
   it("shows the not-applicable reason inline, not hidden in a tooltip", async () => {
     renderAppAt("/obligations?review=not_applicable");
 
+    const table = await screen.findByRole("table", { name: "Extracted obligations" });
     expect(
-      await screen.findByText(/Para 68\(c\) is addressed to co-operative banks/, { selector: "p" }),
+      within(table).getByText(/Para 68\(c\) is addressed to co-operative banks/, { selector: "p" }),
     ).toBeInTheDocument();
   });
 
