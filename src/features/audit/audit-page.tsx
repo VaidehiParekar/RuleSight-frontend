@@ -13,7 +13,10 @@ import type { AuditEntry } from "@/types/domain";
 /** One chip per person (or the pipeline) that appears in the ledger. */
 function actorFilters(items: AuditEntry[]): FilterOption<ActorFilter>[] {
   const actors = [...new Set(items.map((item) => item.actor))].sort((a, b) => a.localeCompare(b));
-  return [{ value: "all", label: "Everyone" }, ...actors.map((name) => ({ value: name, label: name }))];
+  return [
+    { value: "all", label: "Everyone" },
+    ...actors.map((name) => ({ value: name, label: name })),
+  ];
 }
 
 const ENTITY_FILTERS = [

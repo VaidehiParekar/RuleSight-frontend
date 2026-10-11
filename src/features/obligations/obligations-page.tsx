@@ -71,7 +71,7 @@ export function ObligationsPage() {
   const obligations = useObligations();
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
-  const source = (params.get("source") ?? "all") as SourceFilter;
+  const source: SourceFilter = params.get("source") ?? "all";
   const review = (params.get("review") ?? "all") as ReviewFilter;
   const selectedId = params.get("select");
 

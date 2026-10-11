@@ -32,6 +32,24 @@ export default tseslint.config(
     },
   },
   {
+    // Test data and the fake API live under src/test and must never reach the app bundle.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/test/**", "src/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/test", "@/test/*", "**/test/*"],
+              message: "src/test is test-only. App code must use the real API.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["vite.config.ts", "eslint.config.js"],
     extends: [tseslint.configs.disableTypeChecked],
   },

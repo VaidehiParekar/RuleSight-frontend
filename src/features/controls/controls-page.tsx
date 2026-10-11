@@ -317,7 +317,7 @@ function ControlDrawer({
     >
       <QuoteBlock
         text={control.description}
-        source={`${control.source_document} · Fictional bank`}
+        source={`${control.source_document} ${control.source_section}`.trim()}
         size="compact"
       />
       <dl className="definition-list">

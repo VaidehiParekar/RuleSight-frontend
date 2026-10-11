@@ -13,6 +13,7 @@ import { PageFrame } from "@/components/layout/page-frame";
 import { Button, TextButton } from "@/components/ui/button";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useGapTrace, useUpdateGapStatus, useUpdateRemediation } from "@/hooks/use-rulesight";
+import { describeError } from "@/lib/errors";
 import { formatScore, formatStamp } from "@/lib/format";
 import {
   APPLICABILITY_LABEL,
@@ -429,7 +430,9 @@ function VerdictRail({ data }: { data: GapTrace }) {
           danger={dialog.danger}
           requireReason={dialog.reason}
           pending={updateStatus.isPending}
+          error={updateStatus.isError ? describeError(updateStatus.error).message : null}
           onCancel={() => {
+            updateStatus.reset();
             setPending(null);
           }}
           onConfirm={(reason) => {
@@ -514,7 +517,9 @@ function RemediationPlan({ remediation, gapCode }: { remediation: Remediation; g
           danger={confirming === "reject"}
           requireReason={confirming === "reject"}
           pending={update.isPending}
+          error={update.isError ? describeError(update.error).message : null}
           onCancel={() => {
+            update.reset();
             setConfirming(null);
           }}
           onConfirm={(reason) => {

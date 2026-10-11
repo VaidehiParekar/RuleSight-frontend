@@ -74,9 +74,7 @@ export function DashboardPage() {
       subtitle={`${scope}${lastRun}`}
       action={
         <>
-          <Button onClick={openUpload}>
-            Upload document
-          </Button>
+          <Button onClick={openUpload}>Upload document</Button>
           <Button
             variant="primary"
             onClick={() => {

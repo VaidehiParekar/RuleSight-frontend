@@ -17,6 +17,8 @@ interface ReasonDialogProps {
   danger?: boolean;
   onCancel: () => void;
   onConfirm: (reason: string) => void;
+  /** Display-safe message when the last attempt failed (for example a 403). */
+  error?: string | null | undefined;
 }
 
 /** Confirmation that names the acting user and, for reject or dismiss, requires a reason. */
@@ -27,6 +29,7 @@ export function ReasonDialog({
   pending,
   requireReason = true,
   danger = true,
+  error,
   onCancel,
   onConfirm,
 }: ReasonDialogProps) {
@@ -74,6 +77,11 @@ export function ReasonDialog({
             />
           )}
         </Field>
+      ) : null}
+      {error ? (
+        <p className="field-message error" role="alert">
+          {error}
+        </p>
       ) : null}
     </Dialog>
   );

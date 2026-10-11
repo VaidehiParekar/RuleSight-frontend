@@ -78,8 +78,7 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
       file: file ? fileProblem(file) : "Choose a file to upload.",
       title: title.trim() ? undefined : "Enter a title.",
       version: version.trim() ? undefined : "Enter a version label, for example v2.",
-      regulator:
-        docType !== "regulation" || regulator.trim() ? undefined : "Enter the regulator.",
+      regulator: docType !== "regulation" || regulator.trim() ? undefined : "Enter the regulator.",
     };
     setErrors(nextErrors);
     if (

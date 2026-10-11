@@ -308,7 +308,6 @@ export function LoginPage() {
             {pending ? "Signing in…" : "Sign in"}
             <ArrowRight size={16} className="login-submit-arrow" aria-hidden="true" />
           </motion.button>
-
         </motion.form>
       </main>
     </div>

@@ -25,8 +25,6 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 /** GET /auth/me for the current token. */
-export function getCurrentUser(
-  options: { signal?: AbortSignal } = {},
-): Promise<UserResponse> {
+export function getCurrentUser(options: { signal?: AbortSignal } = {}): Promise<UserResponse> {
   return apiGet("/auth/me", userResponseSchema, options);
 }

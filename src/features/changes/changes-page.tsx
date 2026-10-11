@@ -128,9 +128,9 @@ export function ChangesPage() {
                     <p>
                       {data.new_document.title} withdraws {annexTotal} circulars. Only{" "}
                       {withdrawn.length} {withdrawn.length === 1 ? "is" : "are"} in the corpus. Not
-                      ingested: {missingCirculars.map((item) => item.date).join(", ")}. The
-                      history of these requirements may be incomplete. RuleSight has not inferred
-                      what these circulars say.
+                      ingested: {missingCirculars.map((item) => item.date).join(", ")}. The history
+                      of these requirements may be incomplete. RuleSight has not inferred what these
+                      circulars say.
                     </p>
                     <ul className="missing-list">
                       {missingCirculars.map((item) => (
@@ -296,7 +296,13 @@ function ChangeCard({
   );
 }
 
-function ObligationLink({ code, obligation }: { code: string; obligation?: Obligation | undefined }) {
+function ObligationLink({
+  code,
+  obligation,
+}: {
+  code: string;
+  obligation?: Obligation | undefined;
+}) {
   return obligation ? (
     <Link className="id-link" to={`/obligations?select=${obligation.id}`}>
       {code}
