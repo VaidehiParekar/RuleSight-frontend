@@ -2,9 +2,9 @@ import { ArrowRight, BarChart3, ChevronRight, Gauge, ListChecks } from "lucide-r
 import { useNavigate } from "react-router";
 
 import { useActor } from "@/app/actor-context";
-import { MeterList } from "@/components/charts/meter-list";
-import { PriorityBars } from "@/components/charts/priority-bars";
-import { StackedBar } from "@/components/charts/stacked-bar";
+import { CoverageDonut } from "@/components/charts/coverage-donut";
+import { MetricBarChart } from "@/components/charts/metric-bar-chart";
+import { PriorityStackChart } from "@/components/charts/priority-stack-chart";
 import { KpiStrip, type Kpi } from "@/components/data-display/kpi-strip";
 import { PriorityChip } from "@/components/data-display/priority-chip";
 import { StatusTag } from "@/components/data-display/status-tag";
@@ -32,14 +32,12 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const summary = useDashboardSummary();
   const isCompliance = actor.id === "priya";
+  const firstName = actor.name.split(" ")[0] ?? actor.name;
+  const lastRun = summary.data ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : "";
 
   return (
     <PageFrame
-      eyebrow={
-        isCompliance
-          ? `Decision brief${summary.data?.last_run_at ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : ""}`
-          : `Review desk${summary.data?.last_run_at ? ` · last run ${formatDateTime(summary.data.last_run_at)}` : ""}`
-      }
+      eyebrow={`${greeting(new Date())}, ${firstName}${lastRun}`}
       title={isCompliance ? "Compliance overview" : "Analyst review queue"}
       subtitle={
         isCompliance
@@ -94,6 +92,13 @@ export function DashboardPage() {
       </QueryView>
     </PageFrame>
   );
+}
+
+function greeting(now: Date): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 function complianceKpis(data: DashboardSummary): Kpi[] {
@@ -167,24 +172,20 @@ function ComplianceCharts({ data }: { data: DashboardSummary }) {
             </IconButton>
           }
         />
-        <div className="coverage-number">
-          <strong>{coveredPct}%</strong>
-          <span>
-            fully covered · {data.coverage.covered} of {applicable}
-          </span>
-        </div>
-        <StackedBar
+        <CoverageDonut
           label="Coverage of applicable obligations"
+          centre={`${String(coveredPct)}%`}
+          centreNote={`covered · ${String(data.coverage.covered)} of ${String(applicable)}`}
           segments={[
-            { key: "covered", label: "Covered", value: data.coverage.covered, className: "seq-5" },
-            { key: "partial", label: "Partial", value: data.coverage.partial, className: "seq-4" },
+            { key: "covered", label: "Covered", value: data.coverage.covered, token: "success" },
+            { key: "partial", label: "Partial", value: data.coverage.partial, token: "warning" },
             {
               key: "insufficient",
-              label: "Insufficient",
+              label: "Insufficient info",
               value: data.coverage.insufficient_info,
-              className: "seq-2",
+              token: "seq-3",
             },
-            { key: "missing", label: "Missing", value: data.coverage.none, className: "seq-1" },
+            { key: "missing", label: "Missing", value: data.coverage.none, token: "critical" },
           ]}
         />
       </Sheet>
@@ -194,7 +195,7 @@ function ComplianceCharts({ data }: { data: DashboardSummary }) {
           title="Gaps by type"
           action={<Gauge size={18} className="muted-icon" aria-hidden="true" />}
         />
-        <PriorityBars
+        <PriorityStackChart
           label="Open gaps by type and priority"
           rows={data.gaps_by_type.map((row) => ({
             label: GAP_TYPE[row.gap_type].label,
@@ -221,7 +222,7 @@ function AnalystCharts({ data }: { data: DashboardSummary }) {
         <QueryView query={evaluation} what="accuracy metrics" rows={4}>
           {(report) => (
             <>
-              <MeterList label="Accuracy metrics, 0 to 1" items={report.metrics} />
+              <MetricBarChart label="Accuracy metrics" metrics={report.metrics} />
               <p className="chart-note">{report.method}</p>
             </>
           )}
@@ -233,32 +234,34 @@ function AnalystCharts({ data }: { data: DashboardSummary }) {
           title="Extracted obligations"
           action={<ListChecks size={18} className="muted-icon" aria-hidden="true" />}
         />
-        <StackedBar
+        <CoverageDonut
           label="Review status of extracted obligations"
+          centre={String(data.review.obligations_suggested)}
+          centreNote="awaiting review"
           segments={[
             {
               key: "accepted",
               label: "Accepted",
               value: data.review.obligations_accepted,
-              className: "seq-5",
+              token: "success",
             },
             {
               key: "edited",
               label: "Edited",
               value: data.review.obligations_edited,
-              className: "seq-3",
+              token: "seq-3",
             },
             {
               key: "suggested",
               label: "Awaiting review",
               value: data.review.obligations_suggested,
-              className: "seq-2",
+              token: "warning",
             },
             {
               key: "rejected",
               label: "Rejected",
               value: data.review.obligations_rejected,
-              className: "seq-1",
+              token: "critical",
             },
           ]}
         />
@@ -412,8 +415,7 @@ function Insight({ eyebrow, title, body, actionLabel, onAction }: InsightProps) 
       <span className="eyebrow">{eyebrow}</span>
       <h2>{title}</h2>
       <p>{body}</p>
-      <div className="insight-rule" aria-hidden="true" />
-      <Button variant="accent" onClick={onAction}>
+      <Button variant="secondary" onClick={onAction}>
         {actionLabel} <ArrowRight size={15} />
       </Button>
     </Sheet>

@@ -67,3 +67,46 @@ describe("application shell", () => {
     expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
   });
 });
+
+describe("sign-in", () => {
+  it("sends a signed-out visitor to sign-in, then back to the page they asked for", async () => {
+    const user = userEvent.setup();
+    renderAppAt("/gaps", { signedInAs: null });
+
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByText(/there is no password/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: /Rahul Mehta/ }));
+    await user.click(screen.getByRole("button", { name: "Continue as Rahul Mehta" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: /gaps/i })).toBeInTheDocument();
+    expect(window.localStorage.getItem("rulesight-session")).toBe("rahul");
+  });
+
+  it("signs out and returns to the sign-in page", async () => {
+    const user = userEvent.setup();
+    renderAppAt("/");
+    await screen.findByRole("heading", { name: "Compliance overview" });
+
+    await user.click(screen.getByRole("button", { name: "Sign out" }));
+
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(window.localStorage.getItem("rulesight-session")).toBeNull();
+  });
+});
+
+describe("search", () => {
+  it("opens with Ctrl+K and jumps to a page", async () => {
+    const user = userEvent.setup();
+    renderAppAt("/");
+    await screen.findByRole("heading", { name: "Compliance overview" });
+
+    await user.keyboard("{Control>}k{/Control}");
+    const dialog = await screen.findByRole("dialog", { name: "Search RuleSight" });
+    await user.type(within(dialog).getByRole("combobox"), "audit");
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByRole("heading", { level: 1, name: /audit/i })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Search RuleSight" })).not.toBeInTheDocument();
+  });
+});

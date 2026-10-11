@@ -1,10 +1,126 @@
 @import "tailwindcss";
-@import "@fontsource-variable/source-serif-4";
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/500.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/500.css";
+/* Ubuntu, self-hosted (same files as the HR Portal). font-display: swap paints text at once
+   in the fallback and reflows to Ubuntu; no third-party font host is contacted. */
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/ubuntu-300-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/ubuntu-300-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ubuntu-400-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ubuntu-400-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/ubuntu-500-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/ubuntu-500-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-700-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-700-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Ubuntu Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ubuntu-mono-400-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Ubuntu Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ubuntu-mono-400-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Ubuntu Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-mono-700-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Ubuntu Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-mono-700-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB,
+    U+20AD-20C0, U+2C60-2C7F, U+A720-A7FF;
+}
 
 /*
  * RuleSight design system: "Aubergine & Parchment" (backend/specs/UI_DESIGN_SPEC.md §3).
@@ -19,131 +135,169 @@
   --color-primary: var(--primary);
   --color-muted-foreground: var(--muted);
   --color-border: var(--border);
-  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  --font-serif: "Source Serif 4 Variable", Georgia, serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: Ubuntu, "Segoe UI", system-ui, sans-serif;
+  --font-serif: Ubuntu, system-ui, sans-serif;
+  --font-mono: "Ubuntu Mono", ui-monospace, monospace;
 }
 
 :root {
   color-scheme: light;
-  --background: #faf5ee;
-  --card: #fffdf9;
-  --sunken: #f3eadf;
-  --raised: #ffffff;
-  --foreground: #2b2130;
-  --muted: #6b5a66;
-  --border: #e8dccf;
-  --input: #94806f;
-  --primary: #574964;
-  --primary-hover: #463a51;
-  --primary-foreground: #fffdf9;
-  --primary-tint: #ede6f0;
-  --accent: #603f26;
-  --accent-strong: #9f8383;
-  --highlight: #c8aaaa;
-  --highlight-foreground: #2b2130;
-  --ring: #574964;
-  --critical: #a33a2c;
-  --critical-bg: #f8e4df;
-  --warning: #8f5a0a;
-  --warning-bg: #f8ebd3;
-  --success: #3f6e46;
-  --success-bg: #e3eee0;
-  --neutral: #7e6464;
-  --neutral-bg: #f1e8e6;
-  --seq-1: #bfa8d2;
-  --seq-2: #9f84bc;
-  --seq-3: #7e62a0;
-  --seq-4: #604783;
-  --seq-5: #432f5e;
-  --cat-clause: #6b4e8c;
-  --cat-obligation: #c9692f;
-  --cat-control: #0083a0;
-  --cat-evidence: #b8862a;
-  --cat-gap: #b4527a;
-  --shadow: 0 16px 42px -18px rgb(43 33 48 / 0.3);
+  /* HR Portal palette: deep navy, signature brand blue, cyan. */
+  --navy: oklch(0.31 0.062 240);
+  --navy-foreground: oklch(0.98 0.005 240);
+  --cyan: oklch(0.75 0.126 213);
+  --background: oklch(0.975 0.005 240);
+  --card: oklch(1 0 0);
+  --sunken: oklch(0.955 0.008 240);
+  --raised: oklch(1 0 0);
+  --foreground: oklch(0.24 0.035 250);
+  --muted: oklch(0.52 0.024 250);
+  --border: oklch(0.9 0.012 240);
+  --input: oklch(0.84 0.014 240);
+  --primary: oklch(0.53 0.128 240.5);
+  --primary-hover: oklch(0.45 0.115 241);
+  --primary-foreground: oklch(0.99 0.005 240);
+  --primary-tint: oklch(0.93 0.03 225);
+  --accent: oklch(0.55 0.11 215);
+  --accent-strong: oklch(0.75 0.126 213);
+  --highlight: oklch(0.9 0.06 213);
+  --highlight-foreground: oklch(0.24 0.035 250);
+  --ring: oklch(0.53 0.128 240.5);
+  --critical: oklch(0.56 0.205 22);
+  --critical-bg: oklch(0.95 0.03 22);
+  --warning: oklch(0.6 0.15 62);
+  --warning-bg: oklch(0.96 0.045 75);
+  --success: oklch(0.55 0.135 152);
+  --success-bg: oklch(0.95 0.04 152);
+  --neutral: oklch(0.52 0.024 250);
+  --neutral-bg: oklch(0.945 0.01 240);
+  --seq-1: oklch(0.9 0.04 235);
+  --seq-2: oklch(0.8 0.08 235);
+  --seq-3: oklch(0.68 0.11 238);
+  --seq-4: oklch(0.53 0.128 240.5);
+  --seq-5: oklch(0.38 0.09 242);
+  --cat-clause: oklch(0.53 0.128 240.5);
+  --cat-obligation: oklch(0.68 0.126 213);
+  --cat-control: oklch(0.45 0.09 285);
+  --cat-evidence: oklch(0.71 0.155 62);
+  --cat-gap: oklch(0.56 0.205 22);
+  --sidebar: oklch(0.28 0.058 243);
+  --sidebar-foreground: oklch(0.86 0.02 240);
+  --sidebar-accent: oklch(0.36 0.07 240);
+  --sidebar-border: oklch(0.36 0.05 240);
+  --gradient-brand: linear-gradient(120deg, var(--navy) 0%, var(--primary) 62%, var(--cyan) 130%);
+  --shadow: 0 1px 2px oklch(0.31 0.062 240 / 0.06), 0 8px 24px -12px oklch(0.31 0.062 240 / 0.18);
+  --shadow-float: 0 24px 60px -28px oklch(0.31 0.062 240 / 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --background: #17121c;
-    --card: #201927;
-    --sunken: #140f18;
-    --raised: #2a2232;
-    --foreground: #f3e9df;
-    --muted: #b3a3ad;
-    --border: #352b3d;
-    --input: #7a6a85;
-    --primary: #c9b6d9;
-    --primary-hover: #dacbe6;
-    --primary-foreground: #17121c;
-    --primary-tint: #2e2538;
-    --accent: #c8aaaa;
-    --accent-strong: #9f8383;
-    --highlight: #574964;
-    --highlight-foreground: #ffeac5;
-    --ring: #ffeac5;
-    --critical: #ee8a78;
-    --critical-bg: #3a1f1d;
-    --warning: #e3b05a;
-    --warning-bg: #38291a;
-    --success: #93c48f;
-    --success-bg: #1c2b1f;
-    --neutral: #c8aaaa;
-    --neutral-bg: #2c2329;
-    --seq-1: #5e4b78;
-    --seq-2: #7a639b;
-    --seq-3: #9880bc;
-    --seq-4: #b7a2d8;
-    --seq-5: #d8caec;
-    --cat-clause: #9a7bd3;
-    --cat-obligation: #d5733a;
-    --cat-control: #0096a8;
-    --cat-evidence: #b8892a;
-    --cat-gap: #cf6c96;
-    --shadow: 0 16px 42px -18px rgb(0 0 0 / 0.7);
+    --navy: oklch(0.31 0.062 240);
+    --navy-foreground: oklch(0.98 0.005 240);
+    --cyan: oklch(0.75 0.126 213);
+    --background: oklch(0.19 0.03 250);
+    --card: oklch(0.24 0.035 248);
+    --sunken: oklch(0.23 0.035 248);
+    --raised: oklch(0.27 0.04 248);
+    --foreground: oklch(0.96 0.006 240);
+    --muted: oklch(0.72 0.02 245);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 18%);
+    --primary: oklch(0.68 0.12 235);
+    --primary-hover: oklch(0.76 0.1 235);
+    --primary-foreground: oklch(0.19 0.03 250);
+    --primary-tint: oklch(0.32 0.05 240);
+    --accent: oklch(0.75 0.126 213);
+    --accent-strong: oklch(0.6 0.12 213);
+    --highlight: oklch(0.4 0.08 213);
+    --highlight-foreground: oklch(0.96 0.006 240);
+    --ring: oklch(0.68 0.12 235);
+    --critical: oklch(0.7 0.17 22);
+    --critical-bg: oklch(0.3 0.07 22);
+    --warning: oklch(0.78 0.14 70);
+    --warning-bg: oklch(0.3 0.06 62);
+    --success: oklch(0.72 0.14 152);
+    --success-bg: oklch(0.3 0.06 152);
+    --neutral: oklch(0.72 0.02 245);
+    --neutral-bg: oklch(0.29 0.04 248);
+    --seq-1: oklch(0.32 0.06 240);
+    --seq-2: oklch(0.42 0.09 240);
+    --seq-3: oklch(0.55 0.11 238);
+    --seq-4: oklch(0.68 0.12 235);
+    --seq-5: oklch(0.82 0.08 230);
+    --cat-clause: oklch(0.68 0.12 235);
+    --cat-obligation: oklch(0.75 0.126 213);
+    --cat-control: oklch(0.65 0.1 285);
+    --cat-evidence: oklch(0.78 0.14 70);
+    --cat-gap: oklch(0.7 0.17 22);
+    --sidebar: oklch(0.16 0.03 250);
+    --sidebar-foreground: oklch(0.86 0.02 240);
+    --sidebar-accent: oklch(0.28 0.058 243);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --gradient-brand: linear-gradient(
+      120deg,
+      var(--navy) 0%,
+      oklch(0.53 0.128 240.5) 62%,
+      var(--cyan) 130%
+    );
+    --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px -12px oklch(0 0 0 / 0.5);
+    --shadow-float: 0 24px 60px -28px oklch(0 0 0 / 0.7);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #17121c;
-  --card: #201927;
-  --sunken: #140f18;
-  --raised: #2a2232;
-  --foreground: #f3e9df;
-  --muted: #b3a3ad;
-  --border: #352b3d;
-  --input: #7a6a85;
-  --primary: #c9b6d9;
-  --primary-hover: #dacbe6;
-  --primary-foreground: #17121c;
-  --primary-tint: #2e2538;
-  --accent: #c8aaaa;
-  --accent-strong: #9f8383;
-  --highlight: #574964;
-  --highlight-foreground: #ffeac5;
-  --ring: #ffeac5;
-  --critical: #ee8a78;
-  --critical-bg: #3a1f1d;
-  --warning: #e3b05a;
-  --warning-bg: #38291a;
-  --success: #93c48f;
-  --success-bg: #1c2b1f;
-  --neutral: #c8aaaa;
-  --neutral-bg: #2c2329;
-  --seq-1: #5e4b78;
-  --seq-2: #7a639b;
-  --seq-3: #9880bc;
-  --seq-4: #b7a2d8;
-  --seq-5: #d8caec;
-  --cat-clause: #9a7bd3;
-  --cat-obligation: #d5733a;
-  --cat-control: #0096a8;
-  --cat-evidence: #b8892a;
-  --cat-gap: #cf6c96;
-  --shadow: 0 16px 42px -18px rgb(0 0 0 / 0.7);
+  --navy: oklch(0.31 0.062 240);
+  --navy-foreground: oklch(0.98 0.005 240);
+  --cyan: oklch(0.75 0.126 213);
+  --background: oklch(0.19 0.03 250);
+  --card: oklch(0.24 0.035 248);
+  --sunken: oklch(0.23 0.035 248);
+  --raised: oklch(0.27 0.04 248);
+  --foreground: oklch(0.96 0.006 240);
+  --muted: oklch(0.72 0.02 245);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 18%);
+  --primary: oklch(0.68 0.12 235);
+  --primary-hover: oklch(0.76 0.1 235);
+  --primary-foreground: oklch(0.19 0.03 250);
+  --primary-tint: oklch(0.32 0.05 240);
+  --accent: oklch(0.75 0.126 213);
+  --accent-strong: oklch(0.6 0.12 213);
+  --highlight: oklch(0.4 0.08 213);
+  --highlight-foreground: oklch(0.96 0.006 240);
+  --ring: oklch(0.68 0.12 235);
+  --critical: oklch(0.7 0.17 22);
+  --critical-bg: oklch(0.3 0.07 22);
+  --warning: oklch(0.78 0.14 70);
+  --warning-bg: oklch(0.3 0.06 62);
+  --success: oklch(0.72 0.14 152);
+  --success-bg: oklch(0.3 0.06 152);
+  --neutral: oklch(0.72 0.02 245);
+  --neutral-bg: oklch(0.29 0.04 248);
+  --seq-1: oklch(0.32 0.06 240);
+  --seq-2: oklch(0.42 0.09 240);
+  --seq-3: oklch(0.55 0.11 238);
+  --seq-4: oklch(0.68 0.12 235);
+  --seq-5: oklch(0.82 0.08 230);
+  --cat-clause: oklch(0.68 0.12 235);
+  --cat-obligation: oklch(0.75 0.126 213);
+  --cat-control: oklch(0.65 0.1 285);
+  --cat-evidence: oklch(0.78 0.14 70);
+  --cat-gap: oklch(0.7 0.17 22);
+  --sidebar: oklch(0.16 0.03 250);
+  --sidebar-foreground: oklch(0.86 0.02 240);
+  --sidebar-accent: oklch(0.28 0.058 243);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --gradient-brand: linear-gradient(
+    120deg,
+    var(--navy) 0%,
+    oklch(0.53 0.128 240.5) 62%,
+    var(--cyan) 130%
+  );
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 24px -12px oklch(0 0 0 / 0.5);
+  --shadow-float: 0 24px 60px -28px oklch(0 0 0 / 0.7);
 }
 
 /* ---- Base ----------------------------------------------------------------------------------- */
@@ -160,7 +314,7 @@ body {
   min-height: 100vh;
   color: var(--foreground);
   font:
-    14px/1.55 "IBM Plex Sans",
+    13px/1.5 Ubuntu,
     "Segoe UI",
     system-ui,
     sans-serif;
@@ -193,21 +347,21 @@ p {
 }
 h1,
 h2 {
-  font-family: "Source Serif 4 Variable", Georgia, serif;
+  font-family: Ubuntu, Georgia, serif;
 }
 h1 {
-  font-size: 32px;
-  line-height: 1.14;
-  letter-spacing: -0.015em;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   font-weight: 600;
 }
 h2 {
-  font-size: 19px;
-  line-height: 1.3;
+  font-size: 15px;
+  line-height: 1.35;
   font-weight: 600;
 }
 h3 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 mark {
@@ -218,11 +372,11 @@ mark {
 }
 
 .mono {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: "Ubuntu Mono", ui-monospace, monospace;
   font-size: 0.92em;
 }
 .serif {
-  font-family: "Source Serif 4 Variable", Georgia, serif;
+  font-family: Ubuntu, Georgia, serif;
 }
 .muted {
   color: var(--muted);
@@ -269,12 +423,12 @@ mark {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-columns: 216px minmax(0, 1fr);
 }
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 232px;
+  width: 216px;
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -288,7 +442,7 @@ mark {
   scrollbar-color: color-mix(in srgb, var(--muted) 28%, transparent) transparent;
 }
 .brand {
-  height: 57px;
+  height: 52px;
   flex: none;
   display: flex;
   align-items: center;
@@ -298,9 +452,9 @@ mark {
 }
 .brand > span {
   font:
-    600 19px "Source Serif 4 Variable",
-    Georgia,
-    serif;
+    600 16px Ubuntu,
+    system-ui,
+    sans-serif;
 }
 .mark {
   width: 18px;
@@ -339,11 +493,11 @@ mark {
 .nav-item {
   position: relative;
   width: 100%;
-  min-height: 36px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  padding: 6px 10px;
   border-radius: 4px;
   color: var(--muted);
   text-decoration: none;
@@ -377,7 +531,7 @@ mark {
   background: var(--critical-bg);
   border-radius: 3px;
   font:
-    500 11px "IBM Plex Mono",
+    500 11px "Ubuntu Mono",
     monospace;
   text-align: center;
 }
@@ -404,8 +558,8 @@ mark {
   position: sticky;
   top: 0;
   z-index: 15;
-  height: 57px;
-  padding: 0 32px;
+  height: 52px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -485,7 +639,7 @@ mark {
   color: var(--primary);
   background: var(--primary-tint);
   font:
-    500 11px "IBM Plex Mono",
+    500 11px "Ubuntu Mono",
     monospace;
 }
 .avatar.square {
@@ -518,13 +672,12 @@ mark {
 .page {
   width: min(1440px, 100%);
   margin: 0 auto;
-  padding: 38px 32px 56px;
+  padding: 24px 24px 40px;
   outline: none;
 }
 .page-header {
-  min-height: 90px;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -536,18 +689,18 @@ mark {
 }
 .page-header p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   max-width: 80ch;
 }
 .button {
-  min-height: 34px;
-  padding: 0 13px;
+  min-height: 32px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid transparent;
   font-weight: 500;
   font-size: 13px;
@@ -654,7 +807,7 @@ mark {
 }
 .link-button.serif {
   font:
-    600 15px "Source Serif 4 Variable",
+    600 15px Ubuntu,
     Georgia,
     serif;
 }
@@ -681,7 +834,7 @@ mark {
   border: 1px dotted var(--input);
   border-radius: 3px;
   font:
-    500 12px "IBM Plex Mono",
+    500 12px "Ubuntu Mono",
     monospace;
   color: var(--foreground);
   text-decoration: none;
@@ -700,7 +853,7 @@ mark {
 .sheet {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .sheet-pad {
   padding: 21px 22px 4px;
@@ -727,8 +880,8 @@ mark {
   background: var(--card);
 }
 .kpi {
-  min-height: 130px;
-  padding: 20px 22px;
+  min-height: 0;
+  padding: 16px 18px;
   border-right: 1px solid var(--border);
 }
 .kpi:last-child {
@@ -740,15 +893,12 @@ mark {
   gap: 8px;
 }
 .folio {
-  color: var(--border);
-  font:
-    500 18px "Source Serif 4 Variable",
-    serif;
+  display: none;
 }
 .kpi > strong {
   display: block;
-  margin: 12px 0 5px;
-  font-size: 31px;
+  margin: 8px 0 2px;
+  font-size: 24px;
   line-height: 1;
   font-weight: 500;
 }
@@ -766,12 +916,12 @@ mark {
   grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
 }
 .chart-card {
-  padding: 21px 22px;
+  padding: 16px 18px;
   margin-bottom: 16px;
 }
 .dashboard-grid .chart-card {
   margin-bottom: 0;
-  min-height: 290px;
+  min-height: 0;
 }
 .coverage-number {
   display: flex;
@@ -934,7 +1084,7 @@ mark {
 }
 .accuracy-row b {
   text-align: right;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "Ubuntu Mono", monospace;
   font-weight: 500;
 }
 .chart-note {
@@ -982,7 +1132,7 @@ mark {
 .queue-type {
   color: var(--accent);
   font:
-    500 10px "IBM Plex Mono",
+    500 10px "Ubuntu Mono",
     monospace;
 }
 .insight {
@@ -990,17 +1140,6 @@ mark {
   overflow: hidden;
   padding: 25px;
   background: var(--sunken);
-}
-.insight::after {
-  content: "§";
-  position: absolute;
-  right: 18px;
-  top: -20px;
-  color: color-mix(in srgb, var(--accent-strong) 14%, transparent);
-  font:
-    500 110px "Source Serif 4 Variable",
-    serif;
-  pointer-events: none;
 }
 .insight h2 {
   max-width: 300px;
@@ -1013,15 +1152,9 @@ mark {
   max-width: 48ch;
   color: var(--muted);
   font:
-    16px/1.55 "Source Serif 4 Variable",
+    16px/1.55 Ubuntu,
     Georgia,
     serif;
-}
-.insight-rule {
-  width: 36px;
-  height: 2px;
-  margin: 20px 0;
-  background: var(--accent-strong);
 }
 
 /* ---- Status, priority, glyphs --------------------------------------------------------------- */
@@ -1081,7 +1214,7 @@ mark {
   border-left: 2px solid;
   border-radius: 2px;
   font:
-    500 11px "IBM Plex Mono",
+    500 11px "Ubuntu Mono",
     monospace;
 }
 .priority.p1 {
@@ -1101,7 +1234,7 @@ mark {
 }
 .glyph {
   font:
-    500 13px "IBM Plex Mono",
+    500 13px "Ubuntu Mono",
     monospace;
   white-space: nowrap;
 }
@@ -1138,8 +1271,8 @@ mark {
   margin-bottom: 16px;
 }
 .table-toolbar {
-  min-height: 70px;
-  padding: 16px 18px;
+  min-height: 0;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1217,7 +1350,7 @@ mark {
 }
 .data-table th,
 .data-table td {
-  padding: 10px 16px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: middle;
@@ -1449,7 +1582,7 @@ mark {
 }
 .dropzone strong {
   font:
-    600 16px "Source Serif 4 Variable",
+    600 16px Ubuntu,
     serif;
 }
 .dropzone span {
@@ -1676,7 +1809,7 @@ mark {
 .empty-title {
   color: var(--foreground);
   font:
-    17px "Source Serif 4 Variable",
+    17px Ubuntu,
     Georgia,
     serif;
 }
@@ -1735,20 +1868,10 @@ mark {
   border-left: 3px solid var(--accent-strong);
   border-radius: 0 4px 4px 0;
 }
-.quote::before {
-  content: "\201C";
-  position: absolute;
-  left: -22px;
-  top: 2px;
-  color: var(--accent-strong);
-  font:
-    28px "Source Serif 4 Variable",
-    serif;
-}
 .quote blockquote {
   margin: 0;
   font:
-    16px/1.7 "Source Serif 4 Variable",
+    16px/1.7 Ubuntu,
     Georgia,
     serif;
   max-width: 68ch;
@@ -1787,7 +1910,7 @@ mark {
   margin: 0;
   padding: 0;
   font:
-    12px "IBM Plex Mono",
+    12px "Ubuntu Mono",
     monospace;
 }
 .graph-path li {
@@ -2010,7 +2133,7 @@ mark {
 .rationale {
   color: var(--muted);
   font:
-    14px/1.55 "Source Serif 4 Variable",
+    13px/1.5 Ubuntu,
     Georgia,
     serif;
 }
@@ -2063,7 +2186,7 @@ mark {
   display: block;
   color: var(--muted);
   font:
-    italic 13px "Source Serif 4 Variable",
+    italic 13px Ubuntu,
     serif;
 }
 .verdict {
@@ -2109,7 +2232,7 @@ mark {
 }
 .ledger dd {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: "Ubuntu Mono", monospace;
 }
 .ledger-total {
   border-bottom: 0 !important;
@@ -2199,6 +2322,7 @@ mark {
 .compare-side {
   padding: 14px 16px;
   border-radius: 4px;
+
   background: var(--sunken);
   display: flex;
   flex-direction: column;
@@ -2213,7 +2337,7 @@ mark {
 .compare-side blockquote {
   margin: 0;
   font:
-    15px/1.65 "Source Serif 4 Variable",
+    15px/1.65 Ubuntu,
     Georgia,
     serif;
 }
@@ -2424,7 +2548,7 @@ mark.added {
 .graph-col-label {
   fill: var(--muted);
   font:
-    600 10px "IBM Plex Sans",
+    600 10px Ubuntu,
     sans-serif;
   letter-spacing: 0.08em;
 }
@@ -2450,7 +2574,7 @@ mark.added {
 .graph-node .node-label {
   fill: var(--foreground);
   font:
-    500 11px "IBM Plex Mono",
+    500 11px "Ubuntu Mono",
     monospace;
 }
 .graph-node .halo {
@@ -2618,6 +2742,822 @@ mark.added {
   gap: 8px;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* ---- Modern fintech layer -------------------------------------------------------------------
+ * Lighter surfaces, rounded cards, sentence-case labels and one sans family. It overrides the
+ * base rules above; the responsive rules below still apply on top of it.
+ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+kbd {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--muted);
+  font:
+    500 11px "Ubuntu Mono",
+    monospace;
+}
+
+/* Type */
+h1 {
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-size: 15px;
+  line-height: 1.35;
+}
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* Shell */
+.app-shell {
+  grid-template-columns: 224px minmax(0, 1fr);
+}
+.sidebar {
+  width: 224px;
+  background: var(--card);
+}
+.brand {
+  height: 56px;
+  border-bottom: 0;
+}
+.brand > span {
+  font:
+    600 16px Ubuntu,
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.01em;
+}
+.sidebar nav {
+  padding: 8px 10px 20px;
+}
+.nav-group {
+  margin-bottom: 16px;
+}
+.nav-label {
+  padding: 0 10px 6px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 500;
+}
+.nav-item {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.nav-item.active::before {
+  display: none;
+}
+.nav-item b {
+  border-radius: 999px;
+}
+.topbar {
+  height: 56px;
+  padding: 0 28px;
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  backdrop-filter: blur(8px);
+}
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(380px, 100%);
+  height: 36px;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: left;
+}
+.search-trigger span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-trigger:hover {
+  border-color: var(--input);
+  color: var(--foreground);
+}
+.theme-toggle {
+  border-radius: 8px;
+  background: var(--card);
+}
+.actor-select {
+  border-left: 0;
+}
+
+/* Page */
+.page {
+  padding: 28px 28px 48px;
+}
+.page-header {
+  min-height: 0;
+  margin-bottom: 22px;
+  padding-bottom: 0;
+  border-bottom: 0;
+  align-items: center;
+}
+.page-header h1 {
+  margin: 2px 0 4px;
+}
+
+/* Surfaces and controls */
+.sheet {
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.button,
+.icon-button,
+.search,
+.control {
+  border-radius: 8px;
+}
+.button.primary {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+}
+.status {
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+.priority {
+  border-left-width: 0;
+  border-radius: 6px;
+}
+.filter {
+  border-radius: 999px;
+}
+.dialog {
+  border-radius: 14px;
+}
+.dialog-foot {
+  background: transparent;
+}
+.table-toolbar {
+  min-height: 0;
+  padding: 14px 16px;
+}
+.data-table thead th {
+  background: transparent;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-weight: 500;
+}
+.pagination {
+  background: transparent;
+}
+
+/* KPI cards */
+.kpi-strip {
+  gap: 14px;
+  margin-bottom: 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.kpi,
+.kpi:last-child {
+  min-height: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.kpi-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.kpi > strong {
+  margin: 8px 0 4px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Dashboard */
+.dashboard-grid {
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.chart-card {
+  padding: 18px 20px;
+}
+.dashboard-grid .chart-card {
+  min-height: 0;
+}
+.section-heading {
+  margin-bottom: 14px;
+}
+.insight {
+  padding: 22px;
+  background: var(--card);
+}
+.insight::after {
+  content: none;
+}
+.insight h2 {
+  max-width: none;
+  font-size: 18px;
+}
+.insight p {
+  margin-bottom: 16px;
+  font:
+    14px/1.6 Ubuntu,
+    system-ui,
+    sans-serif;
+}
+
+/* Charts */
+.donut {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.donut-chart {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+.donut-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.donut-centre strong {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.donut-centre span {
+  max-width: 110px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.donut-legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.donut-legend i {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 3px;
+}
+.donut-legend b {
+  margin-left: auto;
+  color: var(--foreground);
+  font-weight: 600;
+}
+.bar-chart-box {
+  width: 100%;
+}
+.recharts-default-tooltip {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px;
+  background: var(--raised) !important;
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+/* Quotes: plain, no ornament */
+.quote {
+  border-left-color: var(--primary);
+  border-radius: 0 8px 8px 0;
+}
+.quote::before {
+  content: none;
+}
+.quote blockquote {
+  font:
+    14.5px/1.65 Ubuntu,
+    system-ui,
+    sans-serif;
+}
+
+/* Sign-in (HR Portal style: brand-gradient hero with motion, glass card) */
+.login {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--background);
+}
+.login-hero {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 44px 56px;
+  color: var(--navy-foreground);
+  background-image: var(--gradient-brand);
+  border-radius: 0 48px 48px 0;
+  box-shadow: 0 0 50px color-mix(in oklab, var(--primary) 30%, transparent);
+}
+.login-dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: radial-gradient(circle, var(--navy-foreground) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.login-waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.8;
+}
+.login-brand,
+.login-hero-copy,
+.login-hero-foot {
+  position: relative;
+  z-index: 1;
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.login-brand .mark {
+  width: 26px;
+  height: 26px;
+  fill: var(--navy-foreground);
+}
+.login-brand .mark path {
+  stroke: var(--primary);
+}
+.login-hero-copy {
+  max-width: 560px;
+  margin: auto 0;
+}
+.login-hero-copy h1 {
+  font-size: clamp(34px, 3.6vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.login-hero-copy > p {
+  max-width: 46ch;
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+.login-highlights {
+  max-width: 460px;
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.login-highlights li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.login-highlight-icon {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--navy-foreground) 22%, transparent);
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--navy-foreground) 14%, transparent);
+  backdrop-filter: blur(6px);
+}
+.login-highlights strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+.login-highlights small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  opacity: 0.82;
+}
+.login-hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid color-mix(in oklab, var(--navy-foreground) 18%, transparent);
+  font-size: 12px;
+  opacity: 0.9;
+}
+.login-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--navy-foreground);
+  font-weight: 500;
+}
+.login-hero-badge svg {
+  color: var(--cyan);
+}
+.login-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+}
+.login-panel::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--primary) 14%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+.login-card {
+  position: relative;
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: color-mix(in oklab, var(--card) 94%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 20px 60px color-mix(in oklab, var(--primary) 15%, transparent),
+    0 0 40px color-mix(in oklab, var(--cyan) 12%, transparent);
+}
+.login-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.login-eyebrow {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+.login-card h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.role-list {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.role-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  cursor: pointer;
+  transition:
+    border-color 140ms ease-out,
+    box-shadow 140ms ease-out,
+    background 140ms ease-out;
+}
+.role-option:hover {
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+}
+.role-option.selected {
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary-tint) 55%, var(--card));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+.role-option:focus-within {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.role-option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.role-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.role-copy strong {
+  font-weight: 500;
+}
+.role-copy small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.role-check {
+  margin-left: auto;
+  color: var(--primary);
+}
+.login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  gap: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px -8px color-mix(in oklab, var(--primary) 60%, transparent);
+}
+.login-submit-arrow {
+  transition: transform 160ms ease-out;
+}
+.login-submit:hover .login-submit-arrow {
+  transform: translateX(3px);
+}
+.login-note {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Navy sidebar (HR Portal) */
+.sidebar {
+  color: var(--sidebar-foreground);
+  background: var(--sidebar);
+  border-right-color: var(--sidebar-border);
+  scrollbar-color: var(--sidebar-accent) transparent;
+}
+.brand > span {
+  color: var(--navy-foreground);
+}
+.sidebar .mark {
+  fill: var(--cyan);
+}
+.sidebar .mark path {
+  stroke: var(--sidebar);
+}
+.nav-label {
+  color: color-mix(in oklab, var(--sidebar-foreground) 55%, transparent);
+}
+.nav-item {
+  color: var(--sidebar-foreground);
+}
+.nav-item:hover {
+  color: var(--navy-foreground);
+  background: var(--sidebar-accent);
+}
+.nav-item.active {
+  color: var(--navy-foreground);
+  background: var(--sidebar-accent);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+.nav-item b {
+  color: var(--navy-foreground);
+  background: var(--critical);
+}
+.sidebar footer {
+  color: color-mix(in oklab, var(--sidebar-foreground) 70%, transparent);
+  border-top-color: var(--sidebar-border);
+}
+.sidebar footer strong {
+  color: var(--navy-foreground);
+}
+.sidebar .icon-button {
+  color: var(--sidebar-foreground);
+}
+.sidebar .icon-button:hover:not(:disabled) {
+  color: var(--navy-foreground);
+  background: var(--sidebar-accent);
+}
+
+/* Type weights as in the HR Portal */
+h1 {
+  font-weight: 700;
+}
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+.kpi > strong {
+  font-weight: 700;
+}
+.button.primary:hover:not(:disabled) {
+  box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--primary) 60%, transparent);
+}
+
+/* Entrance and hover motion. Turned off by the prefers-reduced-motion rule further down. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.page {
+  animation: fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.kpi {
+  animation: fade-up 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.kpi:nth-child(2) {
+  animation-delay: 60ms;
+}
+.kpi:nth-child(3) {
+  animation-delay: 120ms;
+}
+.kpi:nth-child(4) {
+  animation-delay: 180ms;
+}
+.dashboard-grid > .sheet {
+  animation: fade-up 520ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
+}
+.kpi,
+.dashboard-grid > .sheet {
+  transition:
+    box-shadow 180ms ease-out,
+    transform 180ms ease-out;
+}
+.kpi:hover,
+.dashboard-grid > .sheet:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-float);
+}
+
+@media (max-width: 900px) {
+  .login-hero {
+    border-radius: 0 0 32px 32px;
+  }
+  .login-card {
+    padding: 24px;
+  }
+}
+
+/* Command palette */
+.palette-backdrop {
+  place-items: start center;
+  padding-top: 12vh;
+}
+.palette {
+  width: min(620px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--raised);
+  box-shadow: 0 24px 60px -20px rgb(15 23 42 / 0.35);
+  animation: rise-in 140ms ease-out;
+}
+.palette-input {
+  height: 52px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+.palette-input input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 15px;
+}
+.palette-list {
+  max-height: 360px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+.palette-item {
+  display: grid;
+  grid-template-columns: 92px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.palette-item.active {
+  background: var(--primary-tint);
+}
+.palette-group,
+.palette-hint {
+  color: var(--muted);
+  font-size: 11px;
+}
+.palette-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette-empty {
+  padding: 18px 10px;
+  color: var(--muted);
+  text-align: center;
+}
+.palette-foot {
+  padding: 10px 14px;
+  display: flex;
+  gap: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+  .login-hero {
+    padding: 28px 24px;
+    gap: 24px;
+  }
+  .login-hero-copy h1 {
+    font-size: 26px;
+  }
+  .login-highlights,
+  .login-hero-foot {
+    display: none;
+  }
+  .donut {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
 }
 
 /* ---- Collapsed sidebar and responsive ----------------------------------------------------------- */
@@ -2922,5 +3862,32 @@ mark.added {
   }
   .trace-step {
     break-inside: avoid;
+  }
+}
+
+/* The menu button is for small screens only (.icon-button would otherwise show it). */
+.icon-button.mobile-menu {
+  display: none;
+}
+
+/* ---- Modern layer: mobile adjustments (after the responsive section) ------------------------- */
+
+@media (max-width: 760px) {
+  .icon-button.mobile-menu {
+    display: inline-flex;
+  }
+  .kpi,
+  .kpi:nth-child(2),
+  .kpi:nth-child(-n + 2) {
+    border: 1px solid var(--border);
+  }
+  .search-trigger {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+  .search-trigger span,
+  .search-trigger kbd {
+    display: none;
   }
 }
