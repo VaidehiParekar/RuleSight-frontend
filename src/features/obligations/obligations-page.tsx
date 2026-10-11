@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 import { QuoteBlock } from "@/components/data-display/quote-block";
 import { LabelTag, StatusTag } from "@/components/data-display/status-tag";
@@ -9,7 +9,7 @@ import { useToast } from "@/components/feedback/toast-context";
 import { PageFrame } from "@/components/layout/page-frame";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
-import { FilterGroup } from "@/components/ui/filter-group";
+import { FilterGroup, type FilterOption } from "@/components/ui/filter-group";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { Sheet } from "@/components/ui/sheet";
@@ -18,14 +18,21 @@ import { APPLICABILITY_LABEL, REVIEW_STATUS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { Obligation } from "@/types/domain";
 
-type SourceFilter = "all" | "kyc" | "nsm";
+/** "all", or the id of the source document. */
+type SourceFilter = string;
 type ReviewFilter = "all" | "suggested" | "accepted" | "not_applicable";
 
-const SOURCE_FILTERS = [
-  { value: "all", label: "All sources" },
-  { value: "kyc", label: "KYC MD 2016" },
-  { value: "nsm", label: "NSM MD 2026" },
-] as const;
+/** One chip per source document that has extracted obligations, labelled from the data. */
+function sourceFilters(items: Obligation[]): FilterOption<SourceFilter>[] {
+  const labels = new Map<string, string>();
+  for (const item of items) {
+    if (!labels.has(item.document_id)) labels.set(item.document_id, item.source_label);
+  }
+  return [
+    { value: "all", label: "All sources" },
+    ...[...labels].map(([value, label]) => ({ value, label })),
+  ];
+}
 
 const REVIEW_FILTERS = [
   { value: "all", label: "Any status" },
@@ -38,7 +45,7 @@ function subtitle(items: Obligation[] | undefined): string {
   if (!items) return "Extracted obligations, with the verbatim source beside every field";
   const documents = new Set(items.map((item) => item.document_id)).size;
   const pending = items.filter((item) => item.review_status === "suggested").length;
-  return `${String(items.length)} extracted from ${String(documents)} RBI documents · ${String(pending)} awaiting review`;
+  return `${String(items.length)} extracted from ${String(documents)} ${documents === 1 ? "document" : "documents"} · ${String(pending)} awaiting review`;
 }
 
 /** Single-key shortcuts must not fire while typing or while a dialog is open. */
@@ -77,7 +84,24 @@ export function ObligationsPage() {
 
   return (
     <PageFrame title="Obligations" subtitle={subtitle(obligations.data)}>
-      <QueryView query={obligations} what="obligations" rows={8}>
+      <QueryView
+        query={obligations}
+        what="obligations"
+        rows={8}
+        empty={
+          <Sheet>
+            <EmptyState
+              title="No obligations extracted yet"
+              description="Upload an RBI regulation on the Documents page and run the pipeline. Each obligation it extracts appears here with the verbatim source text for review."
+              action={
+                <Link className="button small" to="/documents">
+                  Go to documents
+                </Link>
+              }
+            />
+          </Sheet>
+        }
+      >
         {(items) => (
           <ObligationsWorkspace
             items={items}
@@ -128,8 +152,7 @@ function ObligationsWorkspace({
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return items.filter((item) => {
-      if (source === "kyc" && item.document_id !== "doc-kyc") return false;
-      if (source === "nsm" && item.document_id !== "doc-nsm-v2") return false;
+      if (source !== "all" && item.document_id !== source) return false;
       if (!matchesReview(item, review)) return false;
       return `${item.code} ${item.summary} ${item.clause_ref} ${item.topic}`
         .toLowerCase()
@@ -162,7 +185,12 @@ function ObligationsWorkspace({
     <>
       <div className="toolbar">
         <SearchField value={query} onChange={onQuery} placeholder="Search obligations" />
-        <FilterGroup label="Source" value={source} options={SOURCE_FILTERS} onChange={onSource} />
+        <FilterGroup
+          label="Source"
+          value={source}
+          options={sourceFilters(items)}
+          onChange={onSource}
+        />
         <FilterGroup
           label="Review status"
           value={review}

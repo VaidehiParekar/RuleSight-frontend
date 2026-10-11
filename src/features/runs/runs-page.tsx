@@ -2,13 +2,13 @@ import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import { StatusTag } from "@/components/data-display/status-tag";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
 import { Sheet } from "@/components/ui/sheet";
 import { runTotals } from "@/features/runs/run-totals";
 import { useReadiness } from "@/hooks/use-readiness";
 import { useRuns } from "@/hooks/use-rulesight";
-import { mockDataEnabled } from "@/lib/env";
 import { formatDateTime, formatDuration, formatNumber } from "@/lib/format";
 
 /** Observability: every pipeline run and its agent nodes (agent_runs table). */
@@ -20,9 +20,19 @@ export function RunsPage() {
       title="Agent runs"
       subtitle="Each pipeline run, its nodes, LLM calls and tokens. Cached calls make reruns deterministic."
     >
-      {mockDataEnabled ? null : <ApiStatus />}
+      <ApiStatus />
       <Sheet className="table-sheet">
-        <QueryView query={runs} what="pipeline runs" rows={4}>
+        <QueryView
+          query={runs}
+          what="pipeline runs"
+          rows={4}
+          empty={
+            <EmptyState
+              title="No pipeline runs yet"
+              description="Upload documents, then start a run from the Documents page. Each run's nodes, LLM calls and tokens appear here."
+            />
+          }
+        >
           {(items) => (
             <div className="table-scroll">
               <table className="data-table">

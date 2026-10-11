@@ -13,7 +13,6 @@ import type { DocType, SourceDocument } from "@/types/domain";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [".pdf", ".md", ".txt", ".csv"];
-const REGULATORS = ["RBI", "SEBI", "FIU-IND"].map((value) => ({ value, label: value }));
 
 interface UploadDialogProps {
   documents: SourceDocument[];
@@ -25,6 +24,15 @@ interface FormErrors {
   file?: string | undefined;
   title?: string | undefined;
   version?: string | undefined;
+  regulator?: string | undefined;
+}
+
+/** The regulator of the most recently added regulation, to prefill the form. */
+function latestRegulator(documents: SourceDocument[]): string {
+  const latest = documents
+    .filter((doc) => doc.doc_type === "regulation" && doc.regulator)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+  return latest?.regulator ?? "";
 }
 
 function fileProblem(file: File): string | undefined {
@@ -45,7 +53,7 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
   const [dragging, setDragging] = useState(false);
   const [docType, setDocType] = useState<DocType>("regulation");
   const [title, setTitle] = useState("");
-  const [regulator, setRegulator] = useState("RBI");
+  const [regulator, setRegulator] = useState(() => latestRegulator(documents));
   const [version, setVersion] = useState("");
   const [supersedes, setSupersedes] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
@@ -69,18 +77,29 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
     const nextErrors: FormErrors = {
       file: file ? fileProblem(file) : "Choose a file to upload.",
       title: title.trim() ? undefined : "Enter a title.",
-      version: version.trim() ? undefined : "Enter a version label, for example v2 · 2 Oct 2026.",
+      version: version.trim() ? undefined : "Enter a version label, for example v2.",
+      regulator:
+        docType !== "regulation" || regulator.trim() ? undefined : "Enter the regulator.",
     };
     setErrors(nextErrors);
-    if (!file || nextErrors.file || nextErrors.title || nextErrors.version) return;
+    if (
+      !file ||
+      nextErrors.file ||
+      nextErrors.title ||
+      nextErrors.version ||
+      nextErrors.regulator
+    ) {
+      return;
+    }
 
     upload.mutate(
       {
+        file,
         file_name: file.name,
         file_size: file.size,
         doc_type: docType,
         title: title.trim(),
-        regulator: docType === "regulation" ? regulator : null,
+        regulator: docType === "regulation" ? regulator.trim() : null,
         version_label: version.trim(),
         supersedes_id: supersedes || null,
       },
@@ -166,7 +185,7 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
           <Input
             {...props}
             value={title}
-            placeholder="Master Direction – Note Sorting Machines, 2026"
+            placeholder="Title as printed on the document"
             onChange={(event) => {
               setTitle(event.target.value);
               if (errors.title) setErrors({ ...errors, title: undefined });
@@ -177,9 +196,17 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
 
       <div className="form-grid">
         {docType === "regulation" ? (
-          <Field label="Regulator">
+          <Field label="Regulator" error={errors.regulator}>
             {(props) => (
-              <Listbox {...props} options={REGULATORS} value={regulator} onChange={setRegulator} />
+              <Input
+                {...props}
+                value={regulator}
+                placeholder="Issuing regulator, for example RBI"
+                onChange={(event) => {
+                  setRegulator(event.target.value);
+                  if (errors.regulator) setErrors({ ...errors, regulator: undefined });
+                }}
+              />
             )}
           </Field>
         ) : null}
@@ -188,7 +215,7 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
             <Input
               {...props}
               value={version}
-              placeholder="v2 · 2 Oct 2026"
+              placeholder="For example v2"
               onChange={(event) => {
                 setVersion(event.target.value);
                 if (errors.version) setErrors({ ...errors, version: undefined });

@@ -3,20 +3,14 @@ import { describe, expect, it } from "vitest";
 import { parseEnv } from "@/lib/env";
 
 describe("parseEnv", () => {
-  it("defaults the API base URL to the versioned relative path and enables mocks", () => {
-    expect(parseEnv({})).toEqual({ VITE_API_BASE_URL: "/api/v1", VITE_USE_MOCKS: true });
+  it("defaults the API base URL to the versioned relative path", () => {
+    expect(parseEnv({})).toEqual({ VITE_API_BASE_URL: "/api/v1" });
   });
 
   it("accepts an absolute http(s) API base URL", () => {
     expect(parseEnv({ VITE_API_BASE_URL: "https://api.example.test/api/v1" })).toEqual({
       VITE_API_BASE_URL: "https://api.example.test/api/v1",
-      VITE_USE_MOCKS: true,
     });
-  });
-
-  it("turns mock data off only when VITE_USE_MOCKS is 'false'", () => {
-    expect(parseEnv({ VITE_USE_MOCKS: "false" }).VITE_USE_MOCKS).toBe(false);
-    expect(() => parseEnv({ VITE_USE_MOCKS: "yes" })).toThrow(/VITE_USE_MOCKS/);
   });
 
   it("rejects values that are neither a relative path nor an http(s) URL", () => {

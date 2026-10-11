@@ -540,21 +540,6 @@ kbd {
 .sidebar footer .mono {
   margin-top: 6px;
 }
-.sidebar footer .fixtures {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--warning);
-  font: 500 11px/16px var(--sans);
-}
-.fixtures::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: currentColor;
-}
 
 .workspace {
   flex: 1;
@@ -3604,11 +3589,6 @@ mark.added {
 }
 .login-submit:hover .login-submit-arrow {
   transform: translateX(3px);
-}
-.login-note {
-  color: var(--muted);
-  font: 400 12px/18px var(--sans);
-  text-align: center;
 }
 
 /* ---- Responsive ----------------------------------------------------------------------------- */

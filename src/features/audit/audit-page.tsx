@@ -3,19 +3,18 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
-import { FilterGroup } from "@/components/ui/filter-group";
+import { FilterGroup, type FilterOption } from "@/components/ui/filter-group";
 import { SearchField } from "@/components/ui/search-field";
 import { Sheet } from "@/components/ui/sheet";
 import { useAudit } from "@/hooks/use-rulesight";
 import { formatStamp } from "@/lib/format";
 import type { AuditEntry } from "@/types/domain";
 
-const ACTOR_FILTERS = [
-  { value: "all", label: "Everyone" },
-  { value: "Priya Sharma", label: "Priya Sharma" },
-  { value: "Rahul Mehta", label: "Rahul Mehta" },
-  { value: "Pipeline", label: "Pipeline" },
-] as const;
+/** One chip per person (or the pipeline) that appears in the ledger. */
+function actorFilters(items: AuditEntry[]): FilterOption<ActorFilter>[] {
+  const actors = [...new Set(items.map((item) => item.actor))].sort((a, b) => a.localeCompare(b));
+  return [{ value: "all", label: "Everyone" }, ...actors.map((name) => ({ value: name, label: name }))];
+}
 
 const ENTITY_FILTERS = [
   { value: "all", label: "All entities" },
@@ -26,7 +25,8 @@ const ENTITY_FILTERS = [
   { value: "document", label: "Documents" },
 ] as const;
 
-type ActorFilter = (typeof ACTOR_FILTERS)[number]["value"];
+/** "all", or an actor name as recorded in the ledger. */
+type ActorFilter = string;
 type EntityFilter = (typeof ENTITY_FILTERS)[number]["value"];
 
 function initials(name: string): string {
@@ -52,11 +52,26 @@ export function AuditPage() {
     >
       <div className="toolbar">
         <SearchField value={query} onChange={setQuery} placeholder="Search the audit log" />
-        <FilterGroup label="Actor" value={actor} options={ACTOR_FILTERS} onChange={setActor} />
+        <FilterGroup
+          label="Actor"
+          value={actor}
+          options={actorFilters(audit.data ?? [])}
+          onChange={setActor}
+        />
         <FilterGroup label="Entity" value={entity} options={ENTITY_FILTERS} onChange={setEntity} />
       </div>
       <Sheet className="table-sheet">
-        <QueryView query={audit} what="the audit log" rows={8}>
+        <QueryView
+          query={audit}
+          what="the audit log"
+          rows={8}
+          empty={
+            <EmptyState
+              title="No audit entries yet"
+              description="Every upload, pipeline run, review and approval is recorded here with who did it and why."
+            />
+          }
+        >
           {(items) => <AuditTable items={items} actor={actor} entity={entity} query={query} />}
         </QueryView>
       </Sheet>

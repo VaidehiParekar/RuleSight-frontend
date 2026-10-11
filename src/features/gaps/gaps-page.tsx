@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { PriorityChip } from "@/components/data-display/priority-chip";
 import { LabelTag, StatusTag } from "@/components/data-display/status-tag";
@@ -42,9 +42,26 @@ export function GapsPage() {
   return (
     <PageFrame
       title="Gaps"
-      subtitle="Obligations not fully met by Nova Trust Bank controls, sorted by risk score"
+      subtitle="Obligations not fully met by the bank's controls, sorted by risk score"
     >
-      <QueryView query={gaps} what="gaps" rows={8}>
+      <QueryView
+        query={gaps}
+        what="gaps"
+        rows={8}
+        empty={
+          <Sheet>
+            <EmptyState
+              title="No gaps found yet"
+              description="Gaps appear after the pipeline compares extracted obligations with your controls and evidence. Upload a regulation and your control matrix, then run the pipeline."
+              action={
+                <Link className="button small" to="/documents">
+                  Go to documents
+                </Link>
+              }
+            />
+          </Sheet>
+        }
+      >
         {(items) => (
           <GapsRegister
             items={items}

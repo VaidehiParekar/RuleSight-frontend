@@ -6,9 +6,7 @@ import { Navigate, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/app/auth-context";
 import { BrandLockup } from "@/components/layout/brand-mark";
 import { Field, Input } from "@/components/ui/field";
-import { mockDataEnabled } from "@/lib/env";
 import { describeError } from "@/lib/errors";
-import { MOCK_USERS } from "@/mocks/fixtures";
 
 const HIGHLIGHTS = [
   {
@@ -238,9 +236,9 @@ export function LoginPage() {
         </div>
 
         <motion.p className="login-hero-foot" {...rise(0.55)}>
-          <span>Demo institution: Nova Trust Bank (fictional)</span>
+          <span>Every finding links back to the verbatim regulatory text.</span>
           <span className="login-hero-badge">
-            <ShieldCheck size={14} aria-hidden="true" /> Regulator: RBI
+            <ShieldCheck size={14} aria-hidden="true" /> Human review on every decision
           </span>
         </motion.p>
       </aside>
@@ -311,27 +309,6 @@ export function LoginPage() {
             <ArrowRight size={16} className="login-submit-arrow" aria-hidden="true" />
           </motion.button>
 
-          {mockDataEnabled ? (
-            <div className="login-note">
-              <p>Demo mode: any password works. Use one of these accounts:</p>
-              <ul className="demo-accounts">
-                {MOCK_USERS.map((user) => (
-                  <li key={user.id}>
-                    <button
-                      type="button"
-                      className="link-button mono"
-                      onClick={() => {
-                        setEmail(user.email);
-                      }}
-                    >
-                      {user.email}
-                    </button>{" "}
-                    <span className="muted">{user.full_name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </motion.form>
       </main>
     </div>

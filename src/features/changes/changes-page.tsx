@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import { LabelTag } from "@/components/data-display/status-tag";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
 import { Sheet } from "@/components/ui/sheet";
@@ -9,7 +10,7 @@ import { useChangeComparison, useGaps, useObligations } from "@/hooks/use-rulesi
 import { CHANGE_TYPE, SIGNIFICANCE } from "@/lib/labels";
 import type { Gap, Obligation, RegulatoryChange, SourceDocument } from "@/types/domain";
 
-/** Obligation-level comparison of NSM v1 (2024 circular) and v2 (2026 Master Direction). */
+/** Obligation-level comparison of the latest document that supersedes another with its earlier version. */
 export function ChangesPage() {
   const comparison = useChangeComparison();
   const gaps = useGaps();
@@ -18,10 +19,28 @@ export function ChangesPage() {
   return (
     <PageFrame
       title="Changes"
-      subtitle="Obligation-level comparison of two versions of an RBI instrument"
+      subtitle="Obligation-level comparison of two versions of a regulation"
     >
-      <QueryView query={comparison} what="the comparison" rows={8}>
+      <QueryView
+        query={comparison}
+        what="the comparison"
+        rows={8}
+        empty={
+          <Sheet>
+            <EmptyState
+              title="No regulatory changes to compare yet"
+              description="Upload a newer version of a regulation and choose the earlier version under “Supersedes”, then run the pipeline. RuleSight compares the two obligation by obligation and shows what changed here."
+              action={
+                <Link className="button small" to="/documents">
+                  Go to documents
+                </Link>
+              }
+            />
+          </Sheet>
+        }
+      >
         {(data) => {
+          if (!data) return null;
           const changes = data.changes;
           const missingCirculars = data.missing_circulars;
           const modified = changes.filter((item) => item.change_type === "modified");
@@ -29,6 +48,9 @@ export function ChangesPage() {
           const consolidated = changes.find((item) => item.change_type === "consolidated");
           const newGaps = [...new Set(changes.flatMap((item) => item.impact?.gaps ?? []))];
           const gapByCode = new Map((gaps.data ?? []).map((gap) => [gap.code, gap]));
+          const obligationByCode = new Map(
+            (obligations.data ?? []).map((item) => [item.code, item]),
+          );
           const summary: { label: string; n: number; glyph: string; tone: string; note: string }[] =
             [
               {
@@ -96,38 +118,53 @@ export function ChangesPage() {
                 ))}
               </div>
 
-              <section className="corpus-gap" role="note">
-                <span className="q-mark" aria-hidden="true">
-                  ?
-                </span>
-                <div>
-                  <h3>Corpus gap: withdrawn circulars not in corpus</h3>
-                  <p>
-                    The v2 Annex withdraws {annexTotal} circulars. Only {withdrawn.length} is in the
-                    corpus. Not ingested: {missingCirculars.map((item) => item.date).join(", ")}.
-                    The 24 Apr 2025 circular, “Revised Timeline for Implementation”, is missing, so
-                    the timeline history may be incomplete. RuleSight has not inferred what these
-                    circulars say.
-                  </p>
-                  <ul className="missing-list">
-                    {missingCirculars.map((item) => (
-                      <li key={item.row}>
-                        <span className="mono">{item.reference}</span> · {item.date} ·{" "}
-                        {item.subject}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link className="button accent small" to="/documents">
-                    Upload missing circular
-                  </Link>
-                </div>
-              </section>
+              {missingCirculars.length > 0 ? (
+                <section className="corpus-gap" role="note">
+                  <span className="q-mark" aria-hidden="true">
+                    ?
+                  </span>
+                  <div>
+                    <h3>Corpus gap: withdrawn circulars not in corpus</h3>
+                    <p>
+                      {data.new_document.title} withdraws {annexTotal} circulars. Only{" "}
+                      {withdrawn.length} {withdrawn.length === 1 ? "is" : "are"} in the corpus. Not
+                      ingested: {missingCirculars.map((item) => item.date).join(", ")}. The
+                      history of these requirements may be incomplete. RuleSight has not inferred
+                      what these circulars say.
+                    </p>
+                    <ul className="missing-list">
+                      {missingCirculars.map((item) => (
+                        <li key={item.row}>
+                          <span className="mono">{item.reference}</span> · {item.date} ·{" "}
+                          {item.subject}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link className="button accent small" to="/documents">
+                      Upload missing circular
+                    </Link>
+                  </div>
+                </section>
+              ) : null}
 
               <section className="change-list" aria-label="Changes">
+                {changes.length === 0 ? (
+                  <Sheet>
+                    <EmptyState
+                      title="No obligation-level changes found"
+                      description="The two versions were compared and no requirement changed."
+                    />
+                  </Sheet>
+                ) : null}
                 {changes
                   .filter((item) => item.change_type !== "consolidated")
                   .map((item) => (
-                    <ChangeCard key={item.id} change={item} gapByCode={gapByCode} />
+                    <ChangeCard
+                      key={item.id}
+                      change={item}
+                      gapByCode={gapByCode}
+                      obligationByCode={obligationByCode}
+                    />
                   ))}
                 {consolidated ? (
                   <ConsolidatedRow change={consolidated} obligations={obligations.data ?? []} />
@@ -174,9 +211,11 @@ function markPhrases(text: string, phrases: string[], className: string): ReactN
 function ChangeCard({
   change,
   gapByCode,
+  obligationByCode,
 }: {
   change: RegulatoryChange;
   gapByCode: Map<string, Gap>;
+  obligationByCode: Map<string, Obligation>;
 }) {
   const compared = change.change_type === "modified" && change.before && change.after;
   const impactObligations = change.impact?.obligations ?? [];
@@ -221,9 +260,7 @@ function ChangeCard({
               {impactObligations.map((code, index) => (
                 <span key={code}>
                   {index ? ", " : ""}
-                  <Link className="id-link" to={`/obligations?select=${code.toLowerCase()}`}>
-                    {code}
-                  </Link>
+                  <ObligationLink code={code} obligation={obligationByCode.get(code)} />
                 </span>
               ))}
             </span>
@@ -238,18 +275,34 @@ function ChangeCard({
               ))}
             </span>
           ) : null}
-          {impactGaps.map((code) => (
-            <span key={code}>
-              New gap{" "}
-              <Link className="id-link primary" to={`/gaps/${code.toLowerCase()}`}>
-                {code}
-                {gapByCode.get(code) ? ` · ${gapByCode.get(code)?.priority ?? ""}` : ""}
-              </Link>
-            </span>
-          ))}
+          {impactGaps.map((code) => {
+            const gap = gapByCode.get(code);
+            return (
+              <span key={code}>
+                New gap{" "}
+                {gap ? (
+                  <Link className="id-link primary" to={`/gaps/${gap.id}`}>
+                    {code} · {gap.priority}
+                  </Link>
+                ) : (
+                  <span className="mono">{code}</span>
+                )}
+              </span>
+            );
+          })}
         </footer>
       ) : null}
     </Sheet>
+  );
+}
+
+function ObligationLink({ code, obligation }: { code: string; obligation?: Obligation | undefined }) {
+  return obligation ? (
+    <Link className="id-link" to={`/obligations?select=${obligation.id}`}>
+      {code}
+    </Link>
+  ) : (
+    <span className="mono">{code}</span>
   );
 }
 
@@ -286,9 +339,13 @@ function ConsolidatedRow({
             const obligation = byCode.get(code);
             return (
               <li key={code}>
-                <Link className="mono code-cell" to={`/obligations?select=${code.toLowerCase()}`}>
-                  {code}
-                </Link>
+                {obligation ? (
+                  <Link className="mono code-cell" to={`/obligations?select=${obligation.id}`}>
+                    {code}
+                  </Link>
+                ) : (
+                  <span className="mono code-cell">{code}</span>
+                )}
                 <span className="mono muted">{obligation?.clause_ref ?? ""}</span>
                 <span>{obligation?.summary ?? ""}</span>
                 <span className="muted">Carried over</span>

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "@/lib/query-keys";
 import * as api from "@/services/rulesight-api";
+import type { NewDocumentInput, ObligationUpdate, RemediationUpdate } from "@/types/api";
 import type { GapStatus, MappingStatus } from "@/types/domain";
 
 /** Polling interval while a pipeline run or an upload is still processing. */
@@ -82,7 +83,7 @@ function useRefreshAll() {
 export function useUploadDocument() {
   const onSuccess = useRefreshAll();
   return useMutation({
-    mutationFn: (input: api.NewDocumentInput) => api.uploadDocument(input),
+    mutationFn: (input: NewDocumentInput) => api.uploadDocument(input),
     onSuccess,
   });
 }
@@ -95,7 +96,7 @@ export function useStartPipelineRun() {
 export function useUpdateObligation() {
   const onSuccess = useRefreshAll();
   return useMutation({
-    mutationFn: ({ id, update }: { id: string; update: api.ObligationUpdate }) =>
+    mutationFn: ({ id, update }: { id: string; update: ObligationUpdate }) =>
       api.updateObligation(id, update),
     onSuccess,
   });
@@ -129,7 +130,7 @@ export function useUpdateGapStatus() {
 export function useUpdateRemediation() {
   const onSuccess = useRefreshAll();
   return useMutation({
-    mutationFn: ({ id, update }: { id: string; update: api.RemediationUpdate }) =>
+    mutationFn: ({ id, update }: { id: string; update: RemediationUpdate }) =>
       api.updateRemediation(id, update),
     onSuccess,
   });

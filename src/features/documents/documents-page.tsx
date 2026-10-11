@@ -37,7 +37,7 @@ export function DocumentsPage() {
   const [query, setQuery] = useState("");
 
   const items = documents.data ?? [];
-  const real = items.filter((doc) => !doc.is_synthetic).length;
+  const regulations = items.filter((doc) => doc.doc_type === "regulation").length;
   const shownRunId = panelHidden ? null : (activeRunId ?? runs.data?.[0]?.id ?? null);
 
   return (
@@ -45,8 +45,8 @@ export function DocumentsPage() {
       title="Documents"
       subtitle={
         documents.data
-          ? `${String(real)} RBI documents (real text) and ${String(items.length - real)} Nova Trust Bank documents (fictional)`
-          : "Real RBI source text and fictional Nova Trust Bank materials"
+          ? `${String(items.length)} ${items.length === 1 ? "document" : "documents"} · ${String(regulations)} ${regulations === 1 ? "regulation" : "regulations"} and ${String(items.length - regulations)} internal`
+          : "Regulations and the bank's own policies, control matrix and evidence"
       }
       action={
         <>
@@ -91,7 +91,27 @@ export function DocumentsPage() {
         <SearchField value={query} onChange={setQuery} placeholder="Search documents" />
       </div>
       <Sheet className="table-sheet">
-        <QueryView query={documents} what="documents" rows={6}>
+        <QueryView
+          query={documents}
+          what="documents"
+          rows={6}
+          empty={
+            <EmptyState
+              title="No documents yet. Upload an RBI regulation to start."
+              description="Add the regulation first, then your policies, the risk and control matrix and any evidence. Run the pipeline once they show Ready."
+              action={
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setUploadOpen(true);
+                  }}
+                >
+                  Upload document
+                </Button>
+              }
+            />
+          }
+        >
           {(loaded) => <DocumentTable documents={loaded} query={query} onSelect={setSelected} />}
         </QueryView>
       </Sheet>
@@ -203,11 +223,11 @@ function DocumentTable({
                         <span className="doc-meta">
                           {doc.is_synthetic ? (
                             <StatusTag tone="accent" small>
-                              Fictional bank
+                              Synthetic
                             </StatusTag>
                           ) : (
                             <StatusTag tone="primary" outline small>
-                              {doc.regulator ?? "RBI"} · Real text
+                              {doc.regulator ? `${doc.regulator} · ` : ""}Real text
                             </StatusTag>
                           )}
                           <span className="mono">{doc.reference}</span>
@@ -270,8 +290,8 @@ function DocumentDrawer({
         <dt>Source</dt>
         <dd>
           {document.is_synthetic
-            ? "Fictional bank document (is_synthetic = true)"
-            : "Real RBI text"}
+            ? "Synthetic document (is_synthetic = true)"
+            : `Real source text${document.regulator ? ` · ${document.regulator}` : ""}`}
         </dd>
         <dt>Added</dt>
         <dd>{formatDateTime(document.created_at)}</dd>

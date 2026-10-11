@@ -51,7 +51,7 @@ export function hasPermission(
   );
 }
 
-/** How the signed-in user is shown in the UI and recorded in mock audit entries. */
+/** How the signed-in user is shown in the UI. */
 export function toActor(user: UserResponse): Actor {
   return {
     id: user.id,

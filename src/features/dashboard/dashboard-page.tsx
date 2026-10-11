@@ -4,10 +4,10 @@ import { useNavigate } from "react-router";
 import { useSession } from "@/app/auth-context";
 import { RunGantt } from "@/components/charts/run-gantt";
 import { SegmentBar, SegmentLegend, type Segment } from "@/components/charts/segment-bar";
-import { TrendChart } from "@/components/charts/trend-chart";
 import { KpiStrip, type Kpi } from "@/components/data-display/kpi-strip";
 import { PriorityChip } from "@/components/data-display/priority-chip";
 import { StatusTag } from "@/components/data-display/status-tag";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { useToast } from "@/components/feedback/toast-context";
 import { PageFrame } from "@/components/layout/page-frame";
@@ -42,20 +42,8 @@ const PRIORITY_COLOR: Record<Priority, string> = {
 };
 
 /**
- * Earlier pipeline runs are not stored yet, so the trend shows fixed demo history and
- * appends the live counts as the latest point. The card is tagged "Mock values".
- */
-const MOCK_HISTORY: readonly [string, number, number][] = [
-  ["29 Sep", 9, 1],
-  ["1 Oct", 11, 2],
-  ["3 Oct", 11, 2],
-  ["6 Oct", 10, 2],
-  ["8 Oct", 11, 2],
-];
-
-/**
- * Overview. Priya (Compliance Officer) gets exposure and decisions; Rahul (Analyst)
- * gets review progress and pipeline quality. Figures come from the data.
+ * Overview. Compliance Officers get exposure and decisions; analysts get review progress
+ * and pipeline quality. Every figure comes from the API.
  */
 export function DashboardPage() {
   const { user } = useSession();
@@ -69,23 +57,24 @@ export function DashboardPage() {
   const isCompliance = user.role !== ROLES.complianceAnalyst;
 
   const sources = [...new Set((obligations.data ?? []).map((item) => item.source_label))];
-  const scope = sources.length ? ` against ${sources.join(" and ")}` : "";
+  const scope = sources.length
+    ? `Measured against ${sources.join(" and ")}`
+    : "No regulations analysed yet";
   const lastRun = summary.data?.last_run_at
     ? ` · last pipeline run ${formatDateTime(summary.data.last_run_at)}`
     : "";
+  const openUpload = () => {
+    setUploadOpen(true);
+  };
 
   return (
     <PageFrame
       roomy
       title={isCompliance ? "Compliance overview" : "Review overview"}
-      subtitle={`Nova Trust Bank (fictional)${scope}${lastRun}`}
+      subtitle={`${scope}${lastRun}`}
       action={
         <>
-          <Button
-            onClick={() => {
-              setUploadOpen(true);
-            }}
-          >
+          <Button onClick={openUpload}>
             Upload document
           </Button>
           <Button
@@ -99,7 +88,21 @@ export function DashboardPage() {
         </>
       }
     >
-      <QueryView query={summary} what="the dashboard" rows={6}>
+      <QueryView
+        query={summary}
+        what="the dashboard"
+        rows={6}
+        isEmpty={(data) => data.obligations_total === 0}
+        empty={
+          <GettingStarted
+            hasDocuments={(documents.data?.length ?? 0) > 0}
+            onUpload={openUpload}
+            onOpenDocuments={() => {
+              void navigate("/documents");
+            }}
+          />
+        }
+      >
         {(data) => (isCompliance ? <ComplianceView data={data} /> : <AnalystView data={data} />)}
       </QueryView>
       {uploadOpen ? (
@@ -115,6 +118,42 @@ export function DashboardPage() {
         />
       ) : null}
     </PageFrame>
+  );
+}
+
+/** Shown while the database has no extracted obligations: what to do first. */
+function GettingStarted({
+  hasDocuments,
+  onUpload,
+  onOpenDocuments,
+}: {
+  hasDocuments: boolean;
+  onUpload: () => void;
+  onOpenDocuments: () => void;
+}) {
+  return (
+    <Sheet>
+      <EmptyState
+        title={
+          hasDocuments
+            ? "Documents are uploaded. Run the pipeline to extract obligations."
+            : "Nothing to report yet. Upload documents to start."
+        }
+        description={
+          hasDocuments
+            ? "The pipeline reads each regulation, extracts obligations with verbatim quotes, maps them to your controls and ranks the gaps. The figures here fill in once it has run."
+            : "Upload a regulation (for example an RBI Master Direction), your policies, the risk and control matrix and any evidence, then run the pipeline from the Documents page. Coverage, gaps and remediation plans appear here once it has run."
+        }
+        action={
+          <div className="row" style={{ gap: 8, justifyContent: "center" }}>
+            <Button onClick={onUpload}>Upload document</Button>
+            <Button variant="primary" onClick={onOpenDocuments}>
+              {hasDocuments ? "Run pipeline" : "Go to documents"}
+            </Button>
+          </div>
+        }
+      />
+    </Sheet>
   );
 }
 
@@ -174,8 +213,12 @@ function ComplianceView({ data }: { data: DashboardSummary }) {
     },
     {
       label: "Next deadline",
-      value: data.next_deadline.label.split(" ").slice(0, 2).join(" "),
-      note: `${data.next_deadline.context} · ${String(data.next_deadline.days_remaining)} days`,
+      value: data.next_deadline.date
+        ? data.next_deadline.label.split(" ").slice(0, 2).join(" ")
+        : "None",
+      note: data.next_deadline.date
+        ? `${data.next_deadline.context} · ${String(data.next_deadline.days_remaining)} days`
+        : "No upcoming deadline in the extracted obligations",
       onClick: () => {
         void navigate("/remediation");
       },
@@ -187,7 +230,7 @@ function ComplianceView({ data }: { data: DashboardSummary }) {
       <KpiStrip label="Key figures" items={kpis} />
       <div className="grid-2 stretch">
         <ClauseHero gaps={openGaps} obligations={obligations.data ?? []} />
-        <GapTrend gaps={openGaps} />
+        <LatestRun />
       </div>
       <div className="grid-2">
         <TopRisks gaps={openGaps} />
@@ -262,116 +305,19 @@ function ClauseHero({ gaps, obligations }: { gaps: Gap[]; obligations: Obligatio
   );
 }
 
-function GapTrend({ gaps }: { gaps: Gap[] }) {
-  const [asTable, setAsTable] = useState(false);
-  const p1 = gaps.filter((gap) => gap.priority === "P1").length;
-  const fromChange = gaps.filter((gap) => gap.origin === "change").map((gap) => gap.code);
-  const rows: [string, number, number][] = [...MOCK_HISTORY, ["Latest", gaps.length, p1]];
-  const labels = rows.map((row) => row[0]);
-  return (
-    <Sheet className="stack">
-      <SheetHead
-        title="Open gaps across pipeline runs"
-        meta={
-          <>
-            <span className="legend">
-              <span>
-                <i
-                  className="swatch line"
-                  style={{ background: "var(--cyan)" }}
-                  aria-hidden="true"
-                />
-                All open
-              </span>
-              <span>
-                <i
-                  className="swatch line"
-                  style={{ background: "var(--critical)" }}
-                  aria-hidden="true"
-                />
-                P1
-              </span>
-            </span>
-            <StatusTag tone="warning" outline small>
-              Mock values
-            </StatusTag>
-          </>
-        }
-      />
-      <div className="sheet-body" style={{ flex: 1 }}>
-        {asTable ? (
-          <table className="data-table compact">
-            <caption className="sr-only">Open gaps by run</caption>
-            <thead>
-              <tr>
-                <th scope="col">Run</th>
-                <th scope="col" className="numeric">
-                  Open
-                </th>
-                <th scope="col" className="numeric">
-                  P1
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(([run, open, critical]) => (
-                <tr key={run}>
-                  <td>{run}</td>
-                  <td className="numeric">{open}</td>
-                  <td className="numeric">{critical}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <TrendChart
-            labels={labels}
-            label={`Open gaps across ${String(rows.length)} pipeline runs, now ${String(gaps.length)}. P1 gaps now ${String(p1)}.`}
-            annotation={
-              fromChange.length ? `${fromChange.join(", ")} added by a change` : undefined
-            }
-            series={[
-              {
-                key: "open",
-                name: "Open gaps",
-                color: "var(--cyan)",
-                values: rows.map((row) => row[1]),
-              },
-              {
-                key: "p1",
-                name: "P1 gaps",
-                color: "var(--critical)",
-                values: rows.map((row) => row[2]),
-              },
-            ]}
-          />
-        )}
-      </div>
-      <div className="sheet-foot row">
-        <span>
-          {fromChange.length
-            ? `${fromChange.join(", ")} arrived with a regulatory change in the latest run.`
-            : "No gaps arrived from regulatory changes in the latest run."}
-        </span>
-        <TextButton
-          onClick={() => {
-            setAsTable((value) => !value);
-          }}
-        >
-          {asTable ? "View as chart" : "View as table"}
-        </TextButton>
-      </div>
-    </Sheet>
-  );
-}
-
 function TopRisks({ gaps }: { gaps: Gap[] }) {
   const navigate = useNavigate();
   const top = [...gaps].sort((a, b) => b.risk_score - a.risk_score).slice(0, 5);
   return (
     <Sheet className="risk-list">
       <SheetHead title="Top risks" meta="Risk score, descending" />
-      <table className="data-table">
+      {top.length === 0 ? (
+        <EmptyState
+          title="No open gaps"
+          description="Gaps appear here, highest risk first, after the pipeline compares obligations with your controls."
+        />
+      ) : null}
+      <table className="data-table" hidden={top.length === 0}>
         <caption className="sr-only">Top five gaps by risk score</caption>
         <tbody>
           {top.map((gap) => (
@@ -442,6 +388,7 @@ function GapsByType({ data }: { data: DashboardSummary }) {
         }
       />
       <div className="sheet-body bar-rows">
+        {rows.length === 0 ? <p className="muted">No open gaps to break down yet.</p> : null}
         {rows.map((row) => (
           <div className="bar-row" key={row.gap_type}>
             <span>{GAP_TYPE[row.gap_type].label}</span>
@@ -475,7 +422,11 @@ function RiskMatrix({ gaps }: { gaps: Gap[] }) {
   return (
     <Sheet>
       <SheetHead title="Risk matrix" meta="Count of open gaps" />
+      {severities.length === 0 ? (
+        <p className="sheet-pad muted">No open gaps to place on the matrix yet.</p>
+      ) : null}
       <div
+        hidden={severities.length === 0}
         className="risk-matrix"
         role="table"
         aria-label="Open gaps by criticality and severity"
@@ -515,7 +466,8 @@ function RiskMatrix({ gaps }: { gaps: Gap[] }) {
         ))}
       </div>
       <p className="sheet-foot" style={{ borderTop: 0, paddingTop: 0 }}>
-        Rows: criticality. Columns: severity. Score = criticality × severity × urgency (rule v1).
+        Rows: criticality. Columns: severity. Score = criticality × severity × urgency
+        {gaps[0] ? ` (rule ${gaps[0].risk_factors.rule_version})` : ""}.
       </p>
     </Sheet>
   );
@@ -539,6 +491,11 @@ function RemediationProgress({ statuses }: { statuses: RemediationStatus[] }) {
   return (
     <Sheet>
       <SheetHead title="Remediation progress" meta={`${String(statuses.length)} plans drafted`} />
+      {statuses.length === 0 ? (
+        <p className="sheet-pad muted">
+          No remediation plans yet. The pipeline drafts one for each confirmed gap.
+        </p>
+      ) : null}
       <div className="sheet-body stack" style={{ gap: 14, paddingTop: 20 }}>
         <SegmentBar
           size="thick"
@@ -663,6 +620,7 @@ function ReviewByDocument() {
     <Sheet>
       <SheetHead title="Review status by document" meta="Extracted obligations" />
       <div className="sheet-body stack" style={{ gap: 16, padding: "18px 16px" }}>
+        {sources.length === 0 ? <p className="muted">No obligations extracted yet.</p> : null}
         {sources.map((source) => {
           const group = items.filter((item) => item.source_label === source);
           const segments = REVIEW_STAGES.map(([key, label, color]) => ({
@@ -748,17 +706,19 @@ function Accuracy() {
   const evaluation = useEvalReport();
   return (
     <Sheet>
-      <SheetHead
-        title="Accuracy against answer key"
-        meta={
-          evaluation.data?.is_mock ? (
-            <StatusTag tone="warning" outline small>
-              Mock values
-            </StatusTag>
-          ) : null
+      <SheetHead title="Accuracy against answer key" />
+      <QueryView
+        query={evaluation}
+        what="accuracy metrics"
+        rows={6}
+        isEmpty={(report) => report.is_mock || report.metrics.length === 0}
+        empty={
+          <EmptyState
+            title="Accuracy not measured yet"
+            description="Run the pipeline, then run scripts/evaluate.py on the backend to score the results against the answer key. The measured figures appear here."
+          />
         }
-      />
-      <QueryView query={evaluation} what="accuracy metrics" rows={6}>
+      >
         {(report) => (
           <>
             <div className="sheet-body stack" style={{ gap: 10 }}>

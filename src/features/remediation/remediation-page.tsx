@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { PriorityChip } from "@/components/data-display/priority-chip";
 import { LabelTag } from "@/components/data-display/status-tag";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
 import { Sheet } from "@/components/ui/sheet";
@@ -30,7 +31,24 @@ export function RemediationPage() {
       title="Remediation"
       subtitle="Every action links back to its gap. Nothing moves past draft without an approval in the audit log."
     >
-      <QueryView query={remediations} what="remediation actions" rows={6}>
+      <QueryView
+        query={remediations}
+        what="remediation actions"
+        rows={6}
+        empty={
+          <Sheet>
+            <EmptyState
+              title="No remediation actions yet"
+              description="The pipeline drafts an action for each gap it finds. Upload documents and run the pipeline, then approve or reject the drafts here."
+              action={
+                <Link className="button small" to="/gaps">
+                  View gaps
+                </Link>
+              }
+            />
+          </Sheet>
+        }
+      >
         {(items) => {
           const gapById = new Map((gaps.data ?? []).map((gap) => [gap.id, gap]));
           const rejected = items.filter((item) => item.status === "rejected");

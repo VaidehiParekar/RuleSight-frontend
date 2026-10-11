@@ -2,7 +2,6 @@ import { NavLink } from "react-router";
 
 import { BrandLockup } from "@/components/layout/brand-mark";
 import { useDocuments, useGaps } from "@/hooks/use-rulesight";
-import { mockDataEnabled } from "@/lib/env";
 import { NAV_GROUPS } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -16,8 +15,12 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
   const documents = useDocuments();
   const openP1 =
     gaps.data?.filter((gap) => gap.priority === "P1" && gap.status !== "dismissed").length ?? 0;
-  const regulations =
-    documents.data?.filter((doc) => doc.doc_type === "regulation").length ?? undefined;
+  const regulationDocs = documents.data?.filter((doc) => doc.doc_type === "regulation");
+  const regulators = [
+    ...new Set(
+      (regulationDocs ?? []).map((doc) => doc.regulator).filter((name): name is string => !!name),
+    ),
+  ];
 
   return (
     <aside className={cn("sidebar", mobileOpen && "mobile-open")}>
@@ -49,19 +52,14 @@ export function Sidebar({ mobileOpen, onNavigate }: SidebarProps) {
         ))}
       </nav>
       <footer>
-        <strong>Nova Trust Bank</strong>
-        <span>Fictional tenant</span>
+        <strong>Regulatory corpus</strong>
         <span className="mono">
-          RBI corpus{regulations === undefined ? "" : ` · ${String(regulations)} documents`}
+          {regulationDocs === undefined
+            ? "Loading…"
+            : regulationDocs.length === 0
+              ? "No regulations uploaded"
+              : `${regulators.length > 0 ? `${regulators.join(", ")} · ` : ""}${String(regulationDocs.length)} ${regulationDocs.length === 1 ? "regulation" : "regulations"}`}
         </span>
-        {mockDataEnabled ? (
-          <span
-            className="fixtures"
-            title="Screens are running on demo fixtures, not the live backend"
-          >
-            Demo fixtures
-          </span>
-        ) : null}
       </footer>
     </aside>
   );

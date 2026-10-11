@@ -1,11 +1,12 @@
 import { Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 import { useSession } from "@/app/auth-context";
 import { GraphPath } from "@/components/data-display/graph-path";
 import { QuoteBlock } from "@/components/data-display/quote-block";
 import { LabelTag } from "@/components/data-display/status-tag";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { useToast } from "@/components/feedback/toast-context";
 import { PageFrame } from "@/components/layout/page-frame";
@@ -34,7 +35,7 @@ export function ControlsPage() {
   return (
     <PageFrame
       title="Controls"
-      subtitle="The bank's controls and how each RBI obligation maps to them. Mappings show the graph path and critic result, never a confidence score."
+      subtitle="The bank's controls and how each regulatory obligation maps to them. Mappings show the graph path and critic result, never a confidence score."
     >
       <Tabs
         label="Controls views"
@@ -48,7 +49,22 @@ export function ControlsPage() {
         }}
       />
       <Sheet className="table-sheet" role="tabpanel">
-        <QueryView query={controls} what="controls" rows={8}>
+        <QueryView
+          query={controls}
+          what="controls"
+          rows={8}
+          empty={
+            <EmptyState
+              title="No controls yet"
+              description="Upload the bank's risk and control matrix (RCM) on the Documents page and run the pipeline. Its controls, and how each obligation maps to them, appear here."
+              action={
+                <Link className="button small" to="/documents">
+                  Go to documents
+                </Link>
+              }
+            />
+          }
+        >
           {(controlItems) =>
             tab === "controls" ? (
               <ControlRegister
@@ -115,7 +131,7 @@ function ControlRegister({
       </div>
       <div className="table-scroll">
         <table className="data-table">
-          <caption className="sr-only">Nova Trust controls</caption>
+          <caption className="sr-only">Bank controls</caption>
           <thead>
             <tr>
               <th scope="col">Control</th>

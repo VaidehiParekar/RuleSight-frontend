@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
+import { EmptyState } from "@/components/feedback/empty-state";
 import { QueryView } from "@/components/feedback/query-view";
 import { PageFrame } from "@/components/layout/page-frame";
 import { Sheet } from "@/components/ui/sheet";
@@ -125,7 +126,7 @@ function useWidth<T extends HTMLElement>() {
 export function GraphPage() {
   const graph = useKnowledgeGraph();
   const [params, setParams] = useSearchParams();
-  const focus = params.get("focus") ?? "g-07";
+  const focus = params.get("focus") ?? "";
 
   return (
     <PageFrame
@@ -140,7 +141,20 @@ export function GraphPage() {
           </span>
         ))}
       </div>
-      <QueryView query={graph} what="the knowledge graph" rows={8}>
+      <QueryView
+        query={graph}
+        what="the knowledge graph"
+        rows={8}
+        isEmpty={(data) => data.nodes.length === 0}
+        empty={
+          <Sheet>
+            <EmptyState
+              title="The knowledge graph is empty"
+              description="It links regulation clauses to obligations, controls, evidence, gaps and remediation. Upload documents and run the pipeline to build it."
+            />
+          </Sheet>
+        }
+      >
         {(data) => (
           <GraphView
             graph={data}
