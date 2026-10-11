@@ -34,7 +34,7 @@ describe("Gap trace", () => {
     expect(
       screen.getByText("at least once in every two years for high-risk customers"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Verbatim ✓").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Verbatim").length).toBeGreaterThan(0);
     expect(screen.getByText("Periodic KYC updation")).toBeInTheDocument();
     expect(screen.getByText("2,105")).toBeInTheDocument();
     const verdict = screen.getByRole("complementary", { name: "Verdict and actions" });
@@ -46,6 +46,9 @@ describe("Gap trace", () => {
     renderAppAt("/gaps/g-07");
 
     await user.click(await screen.findByRole("button", { name: "Approve remediation" }));
+    const dialog = screen.getByRole("dialog", { name: "Approve remediation for G-07" });
+    expect(within(dialog).getByText("Priya Sharma, Compliance Officer")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Approve remediation" }));
 
     expect(await screen.findByText("Remediation for G-07 approved")).toBeInTheDocument();
     const audit = screen.getByRole("heading", { name: /Audit history/ }).closest("li");
@@ -62,11 +65,10 @@ describe("Gap trace", () => {
 
     await user.click(await screen.findByRole("button", { name: "Dismiss" }));
     const dialog = screen.getByRole("dialog", { name: "Dismiss G-01" });
-    await user.click(within(dialog).getByRole("button", { name: "Dismiss gap" }));
-    expect(within(dialog).getByText("A reason is required.")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Dismiss gap" })).toBeDisabled();
 
     await user.type(
-      within(dialog).getByRole("textbox", { name: "Reason" }),
+      within(dialog).getByRole("textbox", { name: /Reason/ }),
       "Threshold already lowered",
     );
     await user.click(within(dialog).getByRole("button", { name: "Dismiss gap" }));
@@ -75,6 +77,6 @@ describe("Gap trace", () => {
 
   it("says plainly when no evidence was supplied", async () => {
     renderAppAt("/gaps/g-03");
-    expect(await screen.findByText("No evidence supplied for this control.")).toBeInTheDocument();
+    expect(await screen.findByText(/No evidence supplied for this control\./)).toBeInTheDocument();
   });
 });

@@ -4,12 +4,17 @@ import { Outlet } from "react-router";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
-import { cn } from "@/lib/utils";
+
+function isTyping(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+  );
+}
 
 /** Application shell: skip link, sidebar navigation, top bar, search and the routed page. */
 export function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -17,6 +22,11 @@ export function AppLayout() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearchOpen((open) => !open);
+      } else if (event.key === "/" && !isTyping(event.target)) {
+        event.preventDefault();
+        setSearchOpen(true);
+      } else if (event.key === "Escape") {
+        setNavOpen(false);
       }
     };
     document.addEventListener("keydown", onKey);
@@ -26,34 +36,31 @@ export function AppLayout() {
   }, []);
 
   return (
-    <div className={cn("app-shell", collapsed && "collapsed")}>
+    <div className="app-shell">
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
       <Sidebar
-        collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        onToggleCollapsed={() => {
-          setCollapsed((value) => !value);
-        }}
+        mobileOpen={navOpen}
         onNavigate={() => {
-          setMobileOpen(false);
+          setNavOpen(false);
         }}
       />
-      {mobileOpen ? (
+      {navOpen ? (
         <button
           type="button"
           className="sidebar-scrim"
           aria-label="Close navigation"
           onClick={() => {
-            setMobileOpen(false);
+            setNavOpen(false);
           }}
         />
       ) : null}
       <div className="workspace">
         <Topbar
-          onOpenNavigation={() => {
-            setMobileOpen(true);
+          navOpen={navOpen}
+          onToggleNavigation={() => {
+            setNavOpen((open) => !open);
           }}
           onOpenSearch={() => {
             setSearchOpen(true);

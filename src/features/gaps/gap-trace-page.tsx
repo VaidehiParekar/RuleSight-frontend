@@ -1,4 +1,3 @@
-import { ArrowLeft, Check, EyeOff, FileDiff, Network, Printer, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 
@@ -11,18 +10,18 @@ import { LabelTag, StatusTag } from "@/components/data-display/status-tag";
 import { QueryView } from "@/components/feedback/query-view";
 import { useToast } from "@/components/feedback/toast-context";
 import { PageFrame } from "@/components/layout/page-frame";
-import { Button } from "@/components/ui/button";
+import { Button, TextButton } from "@/components/ui/button";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useGapTrace, useUpdateGapStatus, useUpdateRemediation } from "@/hooks/use-rulesight";
-import { formatDateTime, formatScore } from "@/lib/format";
+import { formatScore, formatStamp } from "@/lib/format";
 import {
   APPLICABILITY_LABEL,
-  COVERAGE,
   DESIGN,
   GAP_STATUS,
   GAP_TYPE,
   OPERATING,
   REMEDIATION_STATUS,
+  REVIEW_STATUS,
 } from "@/lib/labels";
 import type { GapStatus, GapTrace, Remediation } from "@/types/domain";
 
@@ -37,44 +36,40 @@ const SEVERITY_NOTE: Record<string, string> = {
 export function GapTracePage() {
   const { gapId = "" } = useParams();
   const trace = useGapTrace(gapId);
-  const title = trace.data ? `${trace.data.gap.code} · ${trace.data.gap.title}` : "Gap trace";
+  const data = trace.data;
 
   return (
     <PageFrame
-      eyebrow="Gap trace · clause to remediation"
-      title={title}
-      subtitle={
-        trace.data ? (
-          <span className="trace-subtitle">
-            <PriorityChip value={trace.data.gap.priority} />
-            <LabelTag value={GAP_TYPE[trace.data.gap.gap_type]} />
-            <LabelTag value={GAP_STATUS[trace.data.gap.status]} />
-            <span className="mono">
-              {trace.data.obligation.source_label} · {trace.data.obligation.clause_ref}
-            </span>
-          </span>
+      back={{ to: "/gaps", label: "All gaps" }}
+      documentTitle={data ? `${data.gap.code} · ${data.gap.title}` : "Gap trace"}
+      title={
+        data ? (
+          <>
+            <span className="page-title-id">{data.gap.code}</span> · {data.gap.title}
+          </>
         ) : (
-          "Loading the evidence chain…"
+          "Gap trace"
         )
       }
-      action={
-        <>
-          <Link className="button ghost" to="/gaps">
-            <ArrowLeft size={15} /> All gaps
-          </Link>
-          <Button
-            icon={<Printer size={15} />}
-            onClick={() => {
-              window.print();
-            }}
-          >
-            Print
-          </Button>
-        </>
+      subtitle={data ? undefined : "Loading the evidence chain…"}
+      meta={
+        data ? (
+          <div className="tag-row">
+            <PriorityChip value={data.gap.priority} />
+            <StatusTag tone="plain">{GAP_TYPE[data.gap.gap_type].label}</StatusTag>
+            <LabelTag
+              value={GAP_STATUS[data.gap.status]}
+              struck={data.gap.status === "dismissed"}
+            />
+            <span className="mono push">
+              {data.document.title} · {data.obligation.clause_ref}
+            </span>
+          </div>
+        ) : null
       }
     >
       <QueryView query={trace} what="the gap trace" rows={10}>
-        {(data) => <TraceBody data={data} />}
+        {(loaded) => <TraceBody data={loaded} />}
       </QueryView>
     </PageFrame>
   );
@@ -97,27 +92,21 @@ function TraceBody({ data }: { data: GapTrace }) {
     <div className="trace-layout">
       <div className="trace-main">
         {change ? (
-          <div className="notice accent">
-            <FileDiff size={17} aria-hidden="true" />
-            <div>
-              <strong>Introduced by a regulatory change</strong>
-              <span>
-                {change.summary} Urgency ×{gap.risk_factors.urgency}.{" "}
-                <Link to="/changes">View the change</Link>
-              </span>
-            </div>
+          <div className="change-banner">
+            <span className="eyebrow">Regulatory change</span>
+            <span>
+              Introduced by a regulatory change: {change.summary} Urgency ×
+              {gap.risk_factors.urgency}.
+            </span>
+            <Link to="/changes">View change {change.code}</Link>
           </div>
         ) : null}
 
         <ol className="trace">
-          <TraceStep n={1} entity="clause" title="Regulation clause">
-            <p className="trace-meta">
-              <span className="serif">{document.title}</span>
-              <StatusTag tone="primary" outline>
-                RBI · Real text
-              </StatusTag>
-            </p>
+          <TraceStep n={1} kind="clause" title="Regulation clause">
+            <p className="trace-doc">{document.title}</p>
             <QuoteBlock
+              size="large"
               text={obligation.source_quote}
               highlight={obligation.key_phrase}
               source={`${obligation.source_label} · ${obligation.clause_ref}${obligation.page ? ` · p. ${String(obligation.page)}` : ""}`}
@@ -125,63 +114,52 @@ function TraceBody({ data }: { data: GapTrace }) {
             />
           </TraceStep>
 
-          <TraceStep n={2} entity="obligation" title={`Obligation · ${obligation.code}`}>
+          <TraceStep n={2} kind="obligation" title="Obligation" entity={obligation.code}>
             <p className="trace-lede">
-              <strong>{obligation.actor}</strong> must{" "}
-              {obligation.action.charAt(0).toLowerCase() + obligation.action.slice(1)}.
+              <span className="muted">{obligation.actor} must</span>{" "}
+              {obligation.action.charAt(0).toLowerCase() + obligation.action.slice(1)}
             </p>
-            <dl className="inline-facts">
-              <div>
-                <dt>Frequency</dt>
-                <dd>{obligation.frequency ?? "Not specified"}</dd>
-              </div>
-              <div>
-                <dt>Deadline</dt>
-                <dd>{obligation.deadline ?? "Not specified"}</dd>
-              </div>
-              <div>
-                <dt>Threshold</dt>
-                <dd>{obligation.threshold ?? "Not specified"}</dd>
-              </div>
-              <div>
-                <dt>Applicability</dt>
-                <dd>{APPLICABILITY_LABEL[obligation.applicability]}</dd>
-              </div>
-            </dl>
+            <div className="trace-meta">
+              <StatusTag tone={obligation.applicability === "applicable" ? "primary" : "neutral"}>
+                {APPLICABILITY_LABEL[obligation.applicability]}
+              </StatusTag>
+              <LabelTag value={REVIEW_STATUS[obligation.review_status]} />
+              <span className="push">
+                Criticality {obligation.criticality} · {obligation.topic}
+              </span>
+            </div>
           </TraceStep>
 
-          <TraceStep
-            n={3}
-            entity="control"
-            title={controls.length === 1 ? "Control" : `Controls · ${String(controls.length)}`}
-          >
+          <TraceStep n={3} kind="control" title={controls.length > 1 ? "Controls" : "Control"}>
             {controls.length === 0 ? (
-              <div className="notice neutral">
-                <div>
-                  <strong>No control in the RCM or policies covers this obligation.</strong>
+              <div className="empty-block">
+                <p>No control in the RCM or policies covers this obligation.</p>
+                <div className="graph-path">
+                  <span className="eyebrow">Search</span>
                   <span>
-                    The graph search (kg_candidates and kg_orphans) found no control on this topic.
+                    {obligation.code} → topic: {obligation.topic} ←
                   </span>
+                  <span className="fg">no control found</span>
+                  <span>· kg_orphans</span>
                 </div>
               </div>
             ) : (
               controls.map((control) => {
                 const mapping = mappings.find((item) => item.control_id === control.id);
                 return (
-                  <article className="control-card" key={control.id}>
+                  <div className="control-block" key={control.id}>
                     <header>
                       <span className="mono">{control.code}</span>
                       <strong>{control.name}</strong>
-                      {mapping ? <LabelTag value={COVERAGE[mapping.coverage]} /> : null}
                     </header>
-                    <p className="trace-meta">
+                    <p className="muted">
                       {control.owner} · {control.frequency} · {control.automation} ·{" "}
-                      {control.source_document} {control.source_section}
+                      {control.control_type}
                     </p>
                     <QuoteBlock
-                      text={control.description}
-                      source={`${control.source_document} · ${control.source_section} · Fictional bank`}
                       size="compact"
+                      text={control.description}
+                      source={`${control.source_document} ${control.source_section}`}
                     />
                     {mapping ? (
                       <>
@@ -189,86 +167,91 @@ function TraceBody({ data }: { data: GapTrace }) {
                         <p className="rationale">{mapping.rationale}</p>
                       </>
                     ) : null}
-                  </article>
+                  </div>
                 );
               })
             )}
           </TraceStep>
 
-          <TraceStep
-            n={4}
-            entity="evidence"
-            title={
-              evidence.length
-                ? `Evidence · ${evidence.map((item) => item.code).join(", ")}`
-                : "Evidence"
-            }
-          >
+          <TraceStep n={4} kind="evidence" title="Evidence">
             {evidence.length === 0 ? (
-              <div className="notice neutral">
-                <EyeOff size={16} aria-hidden="true" />
-                <div>
-                  <strong>No evidence supplied for this control.</strong>
-                  <span>
-                    Operating effectiveness: Insufficient evidence. RuleSight does not assume
-                    compliance.
-                  </span>
-                </div>
+              <div className="empty-block neutral">
+                No evidence supplied for this control. Operating effectiveness:{" "}
+                <strong>Insufficient evidence</strong>. RuleSight does not assume compliance.
               </div>
             ) : (
               evidence.map((item) => <EvidenceTable key={item.id} evidence={item} />)
             )}
           </TraceStep>
 
-          <TraceStep n={5} entity="assessment" title="Assessment">
+          <TraceStep n={5} kind="assessment" title="Assessment">
             {assessment ? (
-              <div className="assessment-grid">
-                <div>
-                  <span className="eyebrow">Design</span>
-                  <LabelTag value={DESIGN[assessment.design]} />
-                  <p>{assessment.design_note}</p>
+              <>
+                <div className="assessment-row">
+                  <span>
+                    Design <LabelTag value={DESIGN[assessment.design]} />
+                  </span>
+                  <span>
+                    Operating <LabelTag value={OPERATING[assessment.operating]} />
+                  </span>
                 </div>
-                <div>
-                  <span className="eyebrow">Operating</span>
-                  <LabelTag value={OPERATING[assessment.operating]} />
-                  <p>{assessment.operating_note}</p>
-                </div>
-              </div>
+                <p className="trace-prose">
+                  {assessment.design_note} {assessment.operating_note}
+                </p>
+              </>
             ) : (
               <p className="muted">Not assessed yet.</p>
             )}
           </TraceStep>
 
-          <TraceStep n={6} entity="gap" title={`Gap · ${GAP_TYPE[gap.gap_type].label}`}>
-            <p className="trace-lede serif">{gap.description}</p>
+          <TraceStep n={6} kind="gap" title="Gap" entity={GAP_TYPE[gap.gap_type].label} plain>
+            <p className="trace-prose">{gap.description}</p>
           </TraceStep>
 
-          <TraceStep n={7} entity="remediation" title="Remediation">
+          <TraceStep
+            n={7}
+            kind="remediation"
+            title="Remediation"
+            extra={
+              remediations[0] ? (
+                <>
+                  <LabelTag value={REMEDIATION_STATUS[remediations[0].status]} />
+                  <span className="cell-sub">
+                    {remediations[0].status === "draft"
+                      ? "Drafted by agent · awaiting approval"
+                      : "Drafted by agent"}
+                  </span>
+                </>
+              ) : null
+            }
+          >
             {remediations.length === 0 ? (
               <p className="muted">No remediation drafted yet.</p>
             ) : (
               remediations.map((item) => (
-                <RemediationCard key={item.id} remediation={item} gapCode={gap.code} />
+                <RemediationPlan key={item.id} remediation={item} gapCode={gap.code} />
               ))
             )}
           </TraceStep>
 
-          <TraceStep n={8} entity="audit" title="Audit history">
+          <TraceStep n={8} kind="audit" title="Audit history">
             {audit.length === 0 ? (
               <p className="muted">No recorded actions yet.</p>
             ) : (
               <ul className="audit-list">
                 {audit.map((entry) => (
                   <li key={entry.id}>
-                    <span className="mono">{formatDateTime(entry.at)}</span>
-                    <span className="audit-actor">{entry.actor}</span>
+                    <span className="mono">{formatStamp(entry.at)}</span>
+                    <span className={entry.actor === "Pipeline" ? "pipeline" : undefined}>
+                      {entry.actor}
+                    </span>
                     <span>
                       {entry.action}
                       {entry.before && entry.after ? (
                         <span className="mono muted">
                           {" "}
-                          {Object.values(entry.before).join(", ")} →{" "}
-                          {Object.values(entry.after).join(", ")}
+                          ({Object.values(entry.before).join(", ")} →{" "}
+                          {Object.values(entry.after).join(", ")})
                         </span>
                       ) : null}
                       {entry.reason ? <em className="audit-reason">“{entry.reason}”</em> : null}
@@ -287,48 +270,74 @@ function TraceBody({ data }: { data: GapTrace }) {
 
 function TraceStep({
   n,
-  entity,
+  kind,
   title,
+  entity,
+  plain = false,
+  extra,
   children,
 }: {
   n: number;
-  entity: string;
+  kind: string;
   title: string;
+  /** Code or label shown after the step name. */
+  entity?: string;
+  /** Show `entity` in sans rather than mono. */
+  plain?: boolean;
+  extra?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <li className={`trace-step ${entity}`}>
+    <li className={`trace-step kind-${kind}`}>
       <span className="trace-dot" aria-hidden="true" />
       <h2 className="trace-title">
-        <span className="mono">§{n}</span> <span className="eyebrow">{title}</span>
+        <span className="mono">§{n}</span>
+        <span className="eyebrow">{title}</span>
+        {entity ? (
+          <span className={plain ? "entity-label" : "mono entity-id"}>{entity}</span>
+        ) : null}
+        {extra}
       </h2>
       <div className="trace-content">{children}</div>
     </li>
   );
 }
 
+const STATUS_DIALOG: Record<
+  Exclude<GapStatus, "potential">,
+  { title: string; body: string; cta: string; reason: boolean; danger: boolean }
+> = {
+  confirmed: {
+    title: "Confirm gap",
+    body: "The gap moves from Potential to Confirmed and is included in the next compliance report.",
+    cta: "Confirm gap",
+    reason: false,
+    danger: false,
+  },
+  needs_info: {
+    title: "Mark as needing information:",
+    body: "The gap stays open and is flagged for the control owner to supply evidence.",
+    cta: "Mark needs info",
+    reason: false,
+    danger: false,
+  },
+  dismissed: {
+    title: "Dismiss",
+    body: "Dismissed gaps stay in the audit trail but leave the open count.",
+    cta: "Dismiss gap",
+    reason: true,
+    danger: true,
+  },
+};
+
 function VerdictRail({ data }: { data: GapTrace }) {
   const { gap } = data;
   const { actor } = useActor();
   const { notify } = useToast();
   const updateStatus = useUpdateGapStatus();
-  const [pendingStatus, setPendingStatus] = useState<GapStatus | null>(null);
-  const factors = gap.risk_factors;
-
-  const apply = (status: GapStatus, reason: string | null) => {
-    updateStatus.mutate(
-      { id: gap.id, status, reason },
-      {
-        onSuccess: () => {
-          setPendingStatus(null);
-          notify({
-            title: `${gap.code}: ${GAP_STATUS[status].label.toLowerCase()}`,
-            detail: `Recorded as ${actor.name}.`,
-          });
-        },
-      },
-    );
-  };
+  const [pending, setPending] = useState<Exclude<GapStatus, "potential"> | null>(null);
+  const factors = data.gap.risk_factors;
+  const dialog = pending ? STATUS_DIALOG[pending] : null;
 
   return (
     <aside className="verdict" aria-label="Verdict and actions">
@@ -340,87 +349,102 @@ function VerdictRail({ data }: { data: GapTrace }) {
         </div>
         <dl className="ledger">
           <div>
-            <dt>Criticality ({data.obligation.topic})</dt>
+            <dt>
+              Criticality <small>({data.obligation.topic})</small>
+            </dt>
             <dd>{factors.criticality}</dd>
           </div>
           <div>
-            <dt>× Severity ({SEVERITY_NOTE[gap.gap_type]})</dt>
+            <dt>
+              × Severity <small>({SEVERITY_NOTE[gap.gap_type]})</small>
+            </dt>
             <dd>{factors.severity}</dd>
           </div>
-          <div>
-            <dt>× Urgency ({gap.origin === "change" ? "regulatory change" : "initial"})</dt>
+          <div className="ledger-last">
+            <dt>
+              × Urgency <small>({gap.origin === "change" ? "from change" : "initial"})</small>
+            </dt>
             <dd>{factors.urgency}</dd>
           </div>
           <div className="ledger-total">
             <dt>
               = {formatScore(gap.risk_score)} → {gap.priority}
             </dt>
-            <dd className="mono">rule {factors.rule_version}</dd>
+            <dd>rule {factors.rule_version}</dd>
           </div>
         </dl>
       </div>
       <div className="verdict-block">
-        <span className="eyebrow">Status</span>
-        <p>
-          <LabelTag value={GAP_STATUS[gap.status]} />
-        </p>
-        <div className="verdict-actions">
-          <Button
-            variant="primary"
-            icon={<Check size={15} />}
-            disabled={gap.status === "confirmed" || updateStatus.isPending}
-            onClick={() => {
-              setPendingStatus("confirmed");
-            }}
-          >
-            Confirm gap
-          </Button>
-          <Button
-            disabled={gap.status === "needs_info" || updateStatus.isPending}
-            onClick={() => {
-              setPendingStatus("needs_info");
-            }}
-          >
-            Needs info
-          </Button>
-          <Button
-            variant="danger"
-            icon={<X size={15} />}
-            disabled={gap.status === "dismissed" || updateStatus.isPending}
-            onClick={() => {
-              setPendingStatus("dismissed");
-            }}
-          >
-            Dismiss
-          </Button>
+        <div className="status-line">
+          <span>Status</span>
+          <LabelTag value={GAP_STATUS[gap.status]} struck={gap.status === "dismissed"} />
         </div>
-        <p className="verdict-actor">
-          Acting as <strong>{actor.name}</strong>
-        </p>
-      </div>
-      <div className="verdict-block">
-        <Link className="button ghost full" to={`/graph?focus=${gap.id}`}>
-          <Network size={15} /> View in graph
+        {gap.status !== "dismissed" ? (
+          <div className="verdict-actions">
+            <Button
+              variant="primary"
+              disabled={gap.status === "confirmed" || updateStatus.isPending}
+              onClick={() => {
+                setPending("confirmed");
+              }}
+            >
+              Confirm gap
+            </Button>
+            <Button
+              size="sm"
+              disabled={gap.status === "needs_info" || updateStatus.isPending}
+              onClick={() => {
+                setPending("needs_info");
+              }}
+            >
+              Needs info
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              disabled={updateStatus.isPending}
+              onClick={() => {
+                setPending("dismissed");
+              }}
+            >
+              Dismiss
+            </Button>
+          </div>
+        ) : null}
+        <Link className="text-button" to={`/graph?focus=${gap.id}`}>
+          View in graph →
         </Link>
       </div>
-      {pendingStatus ? (
+      <div className="verdict-actor">
+        <span className="avatar small" aria-hidden="true">
+          {actor.initials}
+        </span>
+        Acting as {actor.name}
+      </div>
+      {pending && dialog ? (
         <ReasonDialog
-          title={`${pendingStatus === "confirmed" ? "Confirm" : pendingStatus === "dismissed" ? "Dismiss" : "Request information for"} ${gap.code}`}
-          confirmLabel={
-            pendingStatus === "confirmed"
-              ? "Confirm gap"
-              : pendingStatus === "dismissed"
-                ? "Dismiss gap"
-                : "Request information"
-          }
-          variant={pendingStatus === "dismissed" ? "danger" : "primary"}
-          requireReason={pendingStatus !== "confirmed"}
+          title={`${dialog.title} ${gap.code}`}
+          body={dialog.body}
+          confirmLabel={dialog.cta}
+          danger={dialog.danger}
+          requireReason={dialog.reason}
           pending={updateStatus.isPending}
           onCancel={() => {
-            setPendingStatus(null);
+            setPending(null);
           }}
           onConfirm={(reason) => {
-            apply(pendingStatus, reason || null);
+            updateStatus.mutate(
+              { id: gap.id, status: pending, reason: reason || null },
+              {
+                onSuccess: () => {
+                  setPending(null);
+                  notify({
+                    title: `${gap.code}: ${GAP_STATUS[pending].label.toLowerCase()}`,
+                    detail: `Recorded as ${actor.name}.`,
+                  });
+                },
+              },
+            );
           }}
         />
       ) : null}
@@ -428,51 +452,30 @@ function VerdictRail({ data }: { data: GapTrace }) {
   );
 }
 
-function RemediationCard({ remediation, gapCode }: { remediation: Remediation; gapCode: string }) {
+function RemediationPlan({ remediation, gapCode }: { remediation: Remediation; gapCode: string }) {
   const update = useUpdateRemediation();
   const { notify } = useToast();
-  const [rejecting, setRejecting] = useState(false);
-  const isDraft = remediation.status === "draft";
+  const [confirming, setConfirming] = useState<"approve" | "reject" | null>(null);
 
   return (
-    <article className="remediation-card">
-      <header>
-        <LabelTag value={REMEDIATION_STATUS[remediation.status]} />
-        {isDraft ? <span className="muted">Drafted by agent · awaiting approval</span> : null}
-      </header>
-      <p className="serif remediation-action">{remediation.action}</p>
-      <dl className="inline-facts">
-        <div>
-          <dt>Owner team</dt>
-          <dd>{remediation.owner_team}</dd>
-        </div>
-        <div>
-          <dt>Target</dt>
-          <dd>{remediation.target_days} days</dd>
-        </div>
-        <div className="wide">
-          <dt>Closure evidence</dt>
-          <dd>{remediation.closure_evidence}</dd>
-        </div>
+    <>
+      <dl className="definition-list wide-terms">
+        <dt>Action</dt>
+        <dd>{remediation.action}</dd>
+        <dt>Owner team</dt>
+        <dd>{remediation.owner_team}</dd>
+        <dt>Target</dt>
+        <dd>{remediation.target_days} days</dd>
+        <dt>Closure evidence</dt>
+        <dd>{remediation.closure_evidence}</dd>
       </dl>
-      {isDraft ? (
+      {remediation.status === "draft" ? (
         <div className="action-row">
           <Button
             variant="primary"
-            icon={<Check size={15} />}
             disabled={update.isPending}
             onClick={() => {
-              update.mutate(
-                { id: remediation.id, update: { status: "approved" } },
-                {
-                  onSuccess: () => {
-                    notify({
-                      title: `Remediation for ${gapCode} approved`,
-                      detail: "The audit history has a new entry.",
-                    });
-                  },
-                },
-              );
+              setConfirming("approve");
             }}
           >
             Approve remediation
@@ -481,7 +484,7 @@ function RemediationCard({ remediation, gapCode }: { remediation: Remediation; g
             variant="danger"
             disabled={update.isPending}
             onClick={() => {
-              setRejecting(true);
+              setConfirming("reject");
             }}
           >
             Reject
@@ -489,36 +492,53 @@ function RemediationCard({ remediation, gapCode }: { remediation: Remediation; g
         </div>
       ) : remediation.status === "approved" ? (
         <div className="action-row">
-          <Button
+          <TextButton
             disabled={update.isPending}
             onClick={() => {
               update.mutate({ id: remediation.id, update: { status: "in_progress" } });
             }}
           >
-            Mark in progress
-          </Button>
+            Mark in progress →
+          </TextButton>
         </div>
       ) : null}
-      {rejecting ? (
+      {confirming ? (
         <ReasonDialog
-          title={`Reject remediation for ${gapCode}`}
-          confirmLabel="Reject remediation"
+          title={`${confirming === "approve" ? "Approve" : "Reject"} remediation for ${gapCode}`}
+          body={
+            confirming === "approve"
+              ? "The drafted action, owner and target become the agreed plan for this gap."
+              : "The draft is returned to the agent with your reason."
+          }
+          confirmLabel={confirming === "approve" ? "Approve remediation" : "Reject remediation"}
+          danger={confirming === "reject"}
+          requireReason={confirming === "reject"}
           pending={update.isPending}
           onCancel={() => {
-            setRejecting(false);
+            setConfirming(null);
           }}
           onConfirm={(reason) => {
             update.mutate(
-              { id: remediation.id, update: { status: "rejected", reason } },
+              {
+                id: remediation.id,
+                update:
+                  confirming === "approve"
+                    ? { status: "approved" }
+                    : { status: "rejected", reason },
+              },
               {
                 onSuccess: () => {
-                  setRejecting(false);
+                  setConfirming(null);
+                  notify({
+                    title: `Remediation for ${gapCode} ${confirming === "approve" ? "approved" : "rejected"}`,
+                    detail: "The audit history has a new entry.",
+                  });
                 },
               },
             );
           }}
         />
       ) : null}
-    </article>
+    </>
   );
 }
