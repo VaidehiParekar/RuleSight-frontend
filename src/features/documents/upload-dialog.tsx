@@ -56,6 +56,7 @@ export function UploadDialog({ documents, onClose, onUploaded }: UploadDialogPro
 
     upload.mutate(
       {
+        file,
         file_name: file.name,
         file_size: file.size,
         doc_type: docType,

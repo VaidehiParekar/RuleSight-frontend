@@ -17,18 +17,27 @@ const timeFormatter = new Intl.DateTimeFormat("en-GB", {
 const numberFormatter = new Intl.NumberFormat("en-IN");
 
 /** "11 Oct 2026" */
-export function formatDate(iso: string): string {
-  return dateFormatter.format(new Date(iso));
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso || typeof iso !== "string") return "—";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "—";
+  return dateFormatter.format(date);
 }
 
 /** "14:02 IST" */
-export function formatTime(iso: string): string {
-  return `${timeFormatter.format(new Date(iso))} IST`;
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso || typeof iso !== "string") return "—";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "—";
+  return `${timeFormatter.format(date)} IST`;
 }
 
 /** "11 Oct 2026, 14:02 IST" */
-export function formatDateTime(iso: string): string {
-  return `${formatDate(iso)}, ${formatTime(iso)}`;
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso || typeof iso !== "string") return "—";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "—";
+  return `${dateFormatter.format(date)}, ${timeFormatter.format(date)} IST`;
 }
 
 /** Indian digit grouping: 2,105 · 1,24,000 */

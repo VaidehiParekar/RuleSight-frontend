@@ -115,6 +115,7 @@ export function listDocuments(now: number): SourceDocument[] {
 }
 
 export interface NewDocumentInput {
+  file?: File;
   file_name: string;
   file_size: number;
   doc_type: DocType;
