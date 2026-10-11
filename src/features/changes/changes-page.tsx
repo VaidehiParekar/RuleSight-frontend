@@ -24,18 +24,24 @@ export function ChangesPage() {
     >
       <QueryView query={comparison} what="the comparison" rows={8}>
         {(data) => {
-          const modified = data.changes.filter((item) => item.change_type === "modified");
-          const withdrawn = data.changes.filter((item) => item.change_type === "withdrawn");
-          const consolidated = data.changes.find((item) => item.change_type === "consolidated");
-          const newGaps = new Set(data.changes.flatMap((item) => item.impact.gaps));
+          const changes = data.changes ?? [];
+          const modified = changes.filter((item) => item.change_type === "modified");
+          const withdrawn = changes.filter((item) => item.change_type === "withdrawn");
+          const consolidated = changes.find((item) => item.change_type === "consolidated");
+          const newGaps = new Set(
+            changes.flatMap((item) => item.impact?.gaps ?? []).filter(Boolean),
+          );
+          const missingCirculars = data.missing_circulars ?? [];
           return (
             <>
               <Sheet className="compare-head">
                 <div>
                   <span className="eyebrow">Earlier version</span>
-                  <strong className="serif struck">{data.old_document.title}</strong>
+                  <strong className="serif struck">
+                    {data.old_document?.title ?? "Earlier version"}
+                  </strong>
                   <span className="mono">
-                    {data.old_document.version_label} · {data.old_document.reference}
+                    {data.old_document?.version_label ?? ""} · {data.old_document?.reference ?? ""}
                   </span>
                 </div>
                 <span className="compare-arrow" aria-hidden="true">
@@ -43,9 +49,11 @@ export function ChangesPage() {
                 </span>
                 <div>
                   <span className="eyebrow">Later version</span>
-                  <strong className="serif">{data.new_document.title}</strong>
+                  <strong className="serif">
+                    {data.new_document?.title ?? "Later version"}
+                  </strong>
                   <span className="mono">
-                    {data.new_document.version_label} · {data.new_document.reference}
+                    {data.new_document?.version_label ?? ""} · {data.new_document?.reference ?? ""}
                   </span>
                 </div>
               </Sheet>
@@ -61,7 +69,7 @@ export function ChangesPage() {
                   },
                   {
                     label: "Carried over",
-                    value: consolidated?.carried_over.length ?? 0,
+                    value: consolidated?.carried_over?.length ?? 0,
                     note: "Consolidated, not new",
                   },
                   {
@@ -72,35 +80,37 @@ export function ChangesPage() {
                 ]}
               />
 
-              <div className="notice warning corpus-gap" role="note">
-                <FileQuestion size={18} aria-hidden="true" />
-                <div>
-                  <strong>The v2 Annex withdraws 5 circulars. Only 1 is in the corpus.</strong>
-                  <span>
-                    Not ingested:{" "}
-                    {data.missing_circulars
-                      .map((item) => `${item.date} (row ${String(item.row)})`)
-                      .join(", ")}
-                    . The 24 Apr 2025 circular, “Revised Timeline for Implementation”, is missing,
-                    so the timeline history may be incomplete. RuleSight has not inferred what these
-                    circulars say.
-                  </span>
-                  <ul className="missing-list">
-                    {data.missing_circulars.map((item) => (
-                      <li key={item.row}>
-                        <span className="mono">{item.reference}</span> · {item.date} ·{" "}
-                        {item.subject}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link className="button accent small" to="/documents">
-                    <Upload size={14} /> Upload missing circular
-                  </Link>
+              {missingCirculars.length > 0 ? (
+                <div className="notice warning corpus-gap" role="note">
+                  <FileQuestion size={18} aria-hidden="true" />
+                  <div>
+                    <strong>The v2 Annex withdraws 5 circulars. Only 1 is in the corpus.</strong>
+                    <span>
+                      Not ingested:{" "}
+                      {missingCirculars
+                        .map((item) => `${item.date} (row ${String(item.row)})`)
+                        .join(", ")}
+                      . The 24 Apr 2025 circular, “Revised Timeline for Implementation”, is missing,
+                      so the timeline history may be incomplete. RuleSight has not inferred what these
+                      circulars say.
+                    </span>
+                    <ul className="missing-list">
+                      {missingCirculars.map((item) => (
+                        <li key={item.row}>
+                          <span className="mono">{item.reference}</span> · {item.date} ·{" "}
+                          {item.subject}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link className="button accent small" to="/documents">
+                      <Upload size={14} /> Upload missing circular
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <section className="change-list" aria-label="Changes">
-                {data.changes
+                {changes
                   .filter((item) => item.change_type !== "consolidated")
                   .map((item) => (
                     <ChangeCard key={item.id} change={item} />
@@ -115,8 +125,11 @@ export function ChangesPage() {
   );
 }
 
-function markPhrases(text: string, phrases: string[], className: string): ReactNode {
-  const phrase = phrases.find((candidate) => text.includes(candidate));
+function markPhrases(text: string, phrases: string[] | undefined, className: string): ReactNode {
+  if (!text) return text;
+  if (!phrases || phrases.length === 0) return text;
+  const validPhrases = phrases.filter(Boolean);
+  const phrase = validPhrases.find((candidate) => text.includes(candidate));
   if (!phrase) return text;
   const index = text.indexOf(phrase);
   return (
@@ -125,7 +138,7 @@ function markPhrases(text: string, phrases: string[], className: string): ReactN
       <mark className={className}>{phrase}</mark>
       {markPhrases(
         text.slice(index + phrase.length),
-        phrases.filter((candidate) => candidate !== phrase),
+        validPhrases.filter((candidate) => candidate !== phrase),
         className,
       )}
     </>
@@ -133,52 +146,81 @@ function markPhrases(text: string, phrases: string[], className: string): ReactN
 }
 
 function ChangeCard({ change }: { change: RegulatoryChange }) {
+  const code = change.code ?? change.clause_ref ?? change.id.toUpperCase();
+  const changeType = CHANGE_TYPE[change.change_type] ?? {
+    label: change.change_type,
+    tone: "neutral",
+  };
+  const significance = SIGNIFICANCE[change.significance] ?? {
+    label: change.significance,
+    tone: "neutral",
+  };
+
+  const beforeSide =
+    change.before ??
+    (change.old_text
+      ? { ref: `Earlier · ${change.clause_ref ?? "previous"}`, text: change.old_text }
+      : null);
+  const afterSide =
+    change.after ??
+    (change.new_text
+      ? { ref: `Later · ${change.clause_ref ?? "current"}`, text: change.new_text }
+      : null);
+
+  const obligations = change.impact?.obligations ?? [];
+  const controls = change.impact?.controls ?? [];
+  const gaps = change.impact?.gaps ?? [];
+  const graphEntities = change.impact?.graph_affected_entities ?? [];
+  const totalImpacts = obligations.length + controls.length + gaps.length + graphEntities.length;
+
   return (
     <Sheet className="change-card">
       <header>
-        <span className="mono">{change.code}</span>
-        <LabelTag value={CHANGE_TYPE[change.change_type]} />
-        <LabelTag value={SIGNIFICANCE[change.significance]} outline />
+        <span className="mono">{code}</span>
+        <LabelTag value={changeType} />
+        <LabelTag value={significance} outline />
       </header>
       <h2>{change.title}</h2>
       <p className="change-summary">{change.summary}</p>
-      {change.before && change.after ? (
+      {beforeSide && afterSide ? (
         <div className="compare-columns">
           <div className="compare-side before">
-            <span className="eyebrow">Before · {change.before.ref}</span>
+            <span className="eyebrow">Before · {beforeSide.ref}</span>
             <blockquote>
-              {markPhrases(change.before.text, change.removed_phrases, "removed")}
+              {markPhrases(beforeSide.text, change.removed_phrases, "removed")}
             </blockquote>
           </div>
           <div className="compare-side after">
-            <span className="eyebrow">After · {change.after.ref}</span>
-            <blockquote>{markPhrases(change.after.text, change.added_phrases, "added")}</blockquote>
+            <span className="eyebrow">After · {afterSide.ref}</span>
+            <blockquote>{markPhrases(afterSide.text, change.added_phrases, "added")}</blockquote>
           </div>
         </div>
       ) : null}
       <footer className="impact">
         <span className="eyebrow">Impact</span>
-        {change.impact.obligations.length +
-          change.impact.controls.length +
-          change.impact.gaps.length ===
-        0 ? (
+        {totalImpacts === 0 ? (
           <span className="muted">No obligations or controls affected.</span>
         ) : (
           <>
-            {change.impact.obligations.map((code) => (
-              <Link key={code} className="id-link" to={`/obligations?select=${code.toLowerCase()}`}>
-                {code}
+            {obligations.map((itemCode) => (
+              <Link key={itemCode} className="id-link" to={`/obligations?select=${itemCode.toLowerCase()}`}>
+                {itemCode}
               </Link>
             ))}
-            {change.impact.controls.map((code) => (
-              <Link key={code} className="id-link" to="/controls">
-                {code}
+            {controls.map((itemCode) => (
+              <Link key={itemCode} className="id-link" to="/controls">
+                {itemCode}
               </Link>
             ))}
-            {change.impact.gaps.map((code) => (
-              <Link key={code} className="id-link critical" to={`/gaps/${code.toLowerCase()}`}>
-                {code} · new gap
+            {gaps.map((itemCode) => (
+              <Link key={itemCode} className="id-link critical" to={`/gaps/${itemCode.toLowerCase()}`}>
+                {itemCode} · new gap
               </Link>
+            ))}
+            {graphEntities.map((itemCode) => (
+              <span key={itemCode} className="id-link">
+                {itemCode}
+              </span>
             ))}
           </>
         )}
@@ -189,11 +231,18 @@ function ChangeCard({ change }: { change: RegulatoryChange }) {
 
 function ConsolidatedRow({ change }: { change: RegulatoryChange }) {
   const [open, setOpen] = useState(false);
+  const carriedOver = change.carried_over ?? [];
+  const code = change.code ?? change.clause_ref ?? change.id.toUpperCase();
+  const changeType = CHANGE_TYPE[change.change_type] ?? {
+    label: change.change_type,
+    tone: "neutral",
+  };
+
   return (
     <Sheet className="change-card consolidated">
       <header>
-        <span className="mono">{change.code}</span>
-        <LabelTag value={CHANGE_TYPE[change.change_type]} />
+        <span className="mono">{code}</span>
+        <LabelTag value={changeType} />
       </header>
       <h2>{change.title}</h2>
       <p className="change-summary">{change.summary}</p>
@@ -206,14 +255,14 @@ function ConsolidatedRow({ change }: { change: RegulatoryChange }) {
         }}
       >
         <ChevronDown size={14} className={open ? "rotate" : undefined} /> {open ? "Hide" : "Show"}{" "}
-        the {change.carried_over.length} requirements
+        the {carriedOver.length} requirements
       </Button>
       {open ? (
         <ul className="carried-list">
-          {change.carried_over.map((code) => (
-            <li key={code}>
-              <Link className="id-link" to={`/obligations?select=${code.toLowerCase()}`}>
-                {code}
+          {carriedOver.map((itemCode) => (
+            <li key={itemCode}>
+              <Link className="id-link" to={`/obligations?select=${itemCode.toLowerCase()}`}>
+                {itemCode}
               </Link>{" "}
               carried over from DCM(NPD) No.S488 dated 01.07.2022 (not in corpus)
             </li>
